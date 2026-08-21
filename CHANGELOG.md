@@ -1,3 +1,10 @@
+## [1.3.1](https://github.com/lukislp/studylife-capture/compare/v1.3.0...v1.3.1) (2026-08-21)
+
+
+### Bug Fixes
+
+* self-host DM Sans instead of loading it from Google Fonts ([773d746](https://github.com/lukislp/studylife-capture/commit/773d7462b9e06558dc0bacaa0733b415e628b36d))
+
 # [1.3.0](https://github.com/lukislp/studylife-capture/compare/v1.2.0...v1.3.0) (2026-08-21)
 
 
