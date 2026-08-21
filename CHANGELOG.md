@@ -1,3 +1,10 @@
+## [1.1.2](https://github.com/lukislp/studylife-capture/compare/v1.1.1...v1.1.2) (2026-08-21)
+
+
+### Bug Fixes
+
+* save settings before requesting the host permission, not after ([fa6f087](https://github.com/lukislp/studylife-capture/commit/fa6f0872b442ebb2dff0a850f7c6e9539ac3ae3a))
+
 ## [1.1.1](https://github.com/lukislp/studylife-capture/compare/v1.1.0...v1.1.1) (2026-08-21)
 
 
