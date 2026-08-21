@@ -105,18 +105,21 @@ with a separate shared secret between StudyLife and studylife-ai the extension n
 
 ## Security notes
 
-- **Self-hosted, no fixed backend**: `host_permissions` is broad (`http://*/*`, `https://*/*`)
-  because every install points at a different, user-chosen StudyLife instance — there's no single
-  domain to scope permissions to.
+- **No broad host access by default**: `http://*/*`/`https://*/*` are declared as
+  `optional_host_permissions`, not `host_permissions` — nothing is granted at install time. The
+  popup requests access to exactly the one origin you type into the settings form
+  (`chrome.permissions.request`, scoped to that origin only), the moment you save it; the grant
+  then persists, so this only happens again if you point the extension at a different server.
 - **API key storage**: the server URL and API key live in `chrome.storage.local`, local to your
   browser profile. The key itself is a long-lived, revocable secret (StudyLife → Setup → generate
   a new one to rotate, or revoke to invalidate immediately) — never StudyLife's own login
   credentials.
-- **Minimal permissions**: `contextMenus`, `storage`, `notifications`, `scripting` (the last one
-  only for injecting the Readability-based article extractor into the current page on a full-
-  article capture, and only in response to that explicit user action).
+- **Minimal permissions**: `contextMenus`, `storage`, `notifications`, `scripting` (for injecting
+  the Readability-based article extractor), `activeTab` (grants that injection host access to
+  only the current tab, only in response to the context-menu click that triggered it — no
+  standing host permission needed for article capture at all).
 - **No telemetry, no third-party requests**: the only network calls are to the StudyLife server
-  URL you configured.
+  origin you explicitly granted access to.
 
 ## Development
 
@@ -144,6 +147,10 @@ page as a classic script, where an ES module `import` statement can't resolve).
       in the settings popup, packaged `.zip` release build, full CI/CD with semantic-release.
 - [x] Production-verified course matching: found and fixed a live NetworkPolicy gap and a
       direct-course-embedding-confidence issue, confirmed with a real capture correctly assigned.
+- [x] Minimal permissions: replaced broad `host_permissions` with `optional_host_permissions` +
+      a runtime request scoped to the exact server origin, and `activeTab` instead of a standing
+      host grant for article extraction — narrows the permission surface a Chrome Web Store
+      review actually looks at.
 - [ ] Chrome Web Store listing — currently install-as-unpacked only.
 - [ ] Accuracy measurement across a larger set of real captures.
 
