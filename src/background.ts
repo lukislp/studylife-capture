@@ -69,9 +69,25 @@ async function capture(title: string, content: string, sourceUrl: string): Promi
 
   if (result.ok) {
     notify("Saved to StudyLife", title);
-  } else {
-    const detail = result.status ? `HTTP ${result.status}` : "network error";
-    notify("StudyLife Capture failed", `${detail}: ${result.message}`.slice(0, 200));
+    return;
+  }
+
+  switch (result.kind) {
+    case "offline":
+      notify("StudyLife Capture failed", "You're offline - try again once you're back online.");
+      break;
+    case "unauthorized":
+      notify(
+        "StudyLife Capture failed",
+        "Your API key is invalid or was revoked. Generate a new one in StudyLife's Setup page and update it in the extension popup.",
+      );
+      break;
+    case "http":
+      notify("StudyLife Capture failed", `HTTP ${result.status}: ${result.message}`.slice(0, 200));
+      break;
+    case "network":
+      notify("StudyLife Capture failed", `Could not reach the StudyLife server: ${result.message}`.slice(0, 200));
+      break;
   }
 }
 
