@@ -1,10 +1,18 @@
 {
   "manifest_version": 3,
   "name": "StudyLife Capture",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "Save selected text or articles into your self-hosted StudyLife instance as notes.",
-  "permissions": ["contextMenus", "storage", "notifications", "scripting"],
-  "host_permissions": ["http://*/*", "https://*/*"],
+  "permissions": [
+    "contextMenus",
+    "storage",
+    "notifications",
+    "scripting"
+  ],
+  "host_permissions": [
+    "http://*/*",
+    "https://*/*"
+  ],
   "background": {
     "service_worker": "background.js",
     "type": "module"
