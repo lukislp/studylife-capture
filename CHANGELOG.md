@@ -1,3 +1,10 @@
+# [1.2.0](https://github.com/lukislp/studylife-capture/compare/v1.1.2...v1.2.0) (2026-08-21)
+
+
+### Features
+
+* replace placeholder icon with StudyLife's actual brand icon ([f0d01ae](https://github.com/lukislp/studylife-capture/commit/f0d01ae9533f4fba1789c70887901bc1ab270850))
+
 ## [1.1.2](https://github.com/lukislp/studylife-capture/compare/v1.1.1...v1.1.2) (2026-08-21)
 
 
