@@ -7,10 +7,13 @@
   "scripts": {
     "build": "node build.mjs",
     "watch": "node build.mjs --watch",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "package": "node zip.mjs"
   },
   "devDependencies": {
+    "@types/archiver": "^8.0.0",
     "@types/chrome": "^0.0.280",
+    "archiver": "^8.0.0",
     "esbuild": "^0.28.0",
     "typescript": "^5.6.0"
   },
