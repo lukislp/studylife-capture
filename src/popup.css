@@ -28,17 +28,23 @@
   box-sizing: border-box;
 }
 
-body {
+html, body {
   margin: 0;
-  width: 340px;
-  font-family: var(--font);
   background: var(--bg);
+}
+
+body {
+  width: 360px;
+  padding: 0.85rem;
+  font-family: var(--font);
   color: var(--text);
   -webkit-font-smoothing: antialiased;
 }
 
 .card {
   background: var(--bg2);
+  border: 1px solid var(--border2);
+  border-radius: 16px;
   padding: 1.5rem;
 }
 
