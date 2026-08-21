@@ -1,3 +1,10 @@
+# [1.3.0](https://github.com/lukislp/studylife-capture/compare/v1.2.0...v1.3.0) (2026-08-21)
+
+
+### Features
+
+* use studylife-app's actual AppIcon instead of the web sparkle mark ([7f2d283](https://github.com/lukislp/studylife-capture/commit/7f2d283091e99730241afb616ac4ed567a210258))
+
 # [1.2.0](https://github.com/lukislp/studylife-capture/compare/v1.1.2...v1.2.0) (2026-08-21)
 
 
