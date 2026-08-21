@@ -151,10 +151,9 @@ page as a classic script, where an ES module `import` statement can't resolve).
       a runtime request scoped to the exact server origin, and `activeTab` instead of a standing
       host grant for article extraction — narrows the permission surface a Chrome Web Store
       review actually looks at.
-- [ ] Chrome Web Store listing — currently install-as-unpacked only. Submission content
-      ([privacy policy](PRIVACY.md), permission justifications, store listing copy) is drafted
-      in [docs/chrome-web-store-listing.md](docs/chrome-web-store-listing.md); registering a
-      developer account and the actual submission are still open.
+- [ ] Chrome Web Store listing — currently install-as-unpacked only. Developer account is
+      registered; the [privacy policy](PRIVACY.md) is in place; the actual submission (store
+      listing copy, screenshots, permission justifications) is still open.
 - [ ] Accuracy measurement across a larger set of real captures.
 
 ## Tech stack
