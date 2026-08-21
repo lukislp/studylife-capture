@@ -1,0 +1,158 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+# One queue entry per ref (or per PR number, so successive pushes to the same PR don't queue
+# behind each other) - mirrors the other studylife-* repos' pipelines. Only PR runs get
+# cancelled by a newer push to the same PR (fast feedback); a push-to-main run is never
+# cancelled mid-flight, so a release can't be interrupted partway through.
+concurrency:
+  group: ci-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+env:
+  NODE_VERSION: "22"
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - uses: actions/setup-node@v7.0.0
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+      # Self-heal a stale/corrupted actions/setup-node npm cache without paying the cost of a
+      # clean cache on every normal run - only retries with a forced clean if the first
+      # `npm ci` actually fails.
+      - run: npm ci || (npm cache clean --force && npm ci)
+      - run: npm run typecheck
+      - run: npm audit --audit-level=high
+
+  build:
+    needs: [lint]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - uses: actions/setup-node@v7.0.0
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+      - run: npm ci || (npm cache clean --force && npm ci)
+      - run: npm run build
+      - run: npm run package
+      - uses: actions/upload-artifact@v7
+        with:
+          name: studylife-capture-zip
+          path: release/*.zip
+          retention-days: 7
+
+  # ---------------------------------------------------------------------
+  # Version / release - push to main only (mirrors studylife-ai's ci.yml
+  # pattern: semantic-release drives the version, @semantic-release/github
+  # attaches the packaged .zip as a GitHub Release asset instead of pushing
+  # a Docker image - this extension has nothing to containerize).
+  # ---------------------------------------------------------------------
+  get-version:
+    needs: [build]
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    # @semantic-release/github's verifyConditions step checks the token has repo push access
+    # (contents: write) even during a dry run - a read-only token fails that check outright.
+    # issues:write/pull-requests:write are NOT needed here: those only get exercised by the
+    # publish/success/fail lifecycle steps, which dry_run: true skips entirely.
+    permissions:
+      contents: write
+    outputs:
+      next_version: ${{ steps.semrel.outputs.new_release_version }}
+      published: ${{ steps.semrel.outputs.new_release_published }}
+    steps:
+      - uses: actions/checkout@v7.0.1
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v7.0.0
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+      - run: npm ci || (npm cache clean --force && npm ci)
+      # actions/checkout above pins to github.sha - correct for a fresh push event, but a stale
+      # ref for a plain "Re-run jobs" on an old push once main has since moved past that commit
+      # (found live on studylife-ai: two PRs merged minutes apart left get-version permanently
+      # unable to see the second one's commits on re-run, since re-running reuses the original,
+      # by-then-stale github.sha rather than checking out the current tip). Applied here
+      # proactively from the start instead of waiting to hit the same bug.
+      - name: Sync to the current tip of main
+        run: |
+          git fetch origin main
+          git checkout -B main origin/main
+      - id: semrel
+        uses: cycjimmy/semantic-release-action@b12c8f6015dc215fe37bc154d4ad456dd3833c90 # v6.0.0
+        with:
+          dry_run: true
+          extra_plugins: |
+            @semantic-release/changelog@7.0.0
+            @semantic-release/npm@13.0.0
+            @semantic-release/exec@7.1.0
+            @semantic-release/git@11.0.1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: No release needed for this push
+        if: steps.semrel.outputs.new_release_published != 'true'
+        run: |
+          echo "No releasable commits since the last tag (e.g. docs/ci/chore-only) - this is the expected, common case with Conventional Commits, not a failure. semantic-release below skips itself via needs.get-version.outputs.published." | tee -a "$GITHUB_STEP_SUMMARY"
+
+  semantic-release:
+    needs: [get-version]
+    if: github.event_name == 'push' && needs.get-version.outputs.published == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      issues: write
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v7.0.1
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v7.0.0
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+      - run: npm ci || (npm cache clean --force && npm ci)
+      - id: semrel
+        uses: cycjimmy/semantic-release-action@b12c8f6015dc215fe37bc154d4ad456dd3833c90 # v6.0.0
+        with:
+          extra_plugins: |
+            @semantic-release/changelog@7.0.0
+            @semantic-release/npm@13.0.0
+            @semantic-release/exec@7.1.0
+            @semantic-release/git@11.0.1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        continue-on-error: true
+      # Retry once for the narrow window where an out-of-band push to main landed between this
+      # job's checkout and its own push (same pattern as studylife/studylife-ai's ci workflows).
+      - if: steps.semrel.outcome == 'failure'
+        name: "Diagnose before retrying (expected: an out-of-band push landed since checkout)"
+        run: |
+          git fetch origin main
+          BEFORE_SHA="$(git rev-parse HEAD)"
+          AFTER_SHA="$(git rev-parse origin/main)"
+          if [ "$BEFORE_SHA" != "$AFTER_SHA" ]; then
+            echo "origin/main moved since checkout ($BEFORE_SHA -> $AFTER_SHA) - this matches the out-of-band-push race this retry is designed for."
+          else
+            echo "::warning::origin/main did NOT move since checkout - this failure is likely NOT the expected out-of-band-push race. Retrying anyway, but check the semantic-release log above for the real cause before assuming this is just a race."
+          fi
+          git checkout -B main origin/main
+      - if: steps.semrel.outcome == 'failure'
+        uses: cycjimmy/semantic-release-action@b12c8f6015dc215fe37bc154d4ad456dd3833c90 # v6.0.0
+        with:
+          extra_plugins: |
+            @semantic-release/changelog@7.0.0
+            @semantic-release/npm@13.0.0
+            @semantic-release/exec@7.1.0
+            @semantic-release/git@11.0.1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
