@@ -1,3 +1,10 @@
+## [1.1.1](https://github.com/lukislp/studylife-capture/compare/v1.1.0...v1.1.1) (2026-08-21)
+
+
+### Bug Fixes
+
+* upload release asset via gh CLI instead of @semantic-release/github ([b95a429](https://github.com/lukislp/studylife-capture/commit/b95a42968ffdcef4f12dff0016c1736c4ae84923))
+
 # [1.1.0](https://github.com/lukislp/studylife-capture/compare/v1.0.0...v1.1.0) (2026-08-21)
 
 
