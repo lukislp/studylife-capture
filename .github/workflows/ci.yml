@@ -147,6 +147,7 @@ jobs:
           fi
           git checkout -B main origin/main
       - if: steps.semrel.outcome == 'failure'
+        id: semrel_retry
         uses: cycjimmy/semantic-release-action@b12c8f6015dc215fe37bc154d4ad456dd3833c90 # v6.0.0
         with:
           extra_plugins: |
@@ -156,3 +157,24 @@ jobs:
             @semantic-release/git@11.0.1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      # @semantic-release/github no longer uploads the packaged .zip itself (removed from its
+      # `assets` config in .releaserc.json). Its asset-upload call hit a reproducible Node/undici
+      # bug - "invalid content-length header", thrown while octokit builds the OUTGOING request
+      # for a binary body with an explicit numeric Content-Length header - on both v1.0.0 and
+      # v1.1.0's release, not a one-off race (octokit's own internal retry already tried 3 times
+      # first). It also left the GitHub Release stuck in draft both times: @semantic-release/github
+      # creates the release as a draft, uploads assets, then publishes it - an asset-upload
+      # exception skips that last step. `gh release upload` does the same job over a completely
+      # different HTTP stack (Go, not Node's built-in fetch/undici) and worked first-try both times
+      # this was fixed manually. Runs after EITHER semrel attempt succeeded - the working tree
+      # already has the version-bumped manifest.json/package.json from whichever one committed it,
+      # so a fresh build+package here always matches the tag being uploaded to.
+      - name: Upload the packaged .zip to the GitHub Release
+        if: steps.semrel.outcome == 'success' || steps.semrel_retry.outcome == 'success'
+        run: |
+          TAG="${{ steps.semrel.outputs.new_release_git_tag || steps.semrel_retry.outputs.new_release_git_tag }}"
+          npm run build
+          npm run package
+          gh release upload "$TAG" release/*.zip --clobber
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
