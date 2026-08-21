@@ -1,3 +1,10 @@
+# [1.1.0](https://github.com/lukislp/studylife-capture/compare/v1.0.0...v1.1.0) (2026-08-21)
+
+
+### Features
+
+* request server-origin permission at runtime instead of a broad grant ([69c832f](https://github.com/lukislp/studylife-capture/commit/69c832f6c39b3bf84dd67dca7afcb49a2eda30b5))
+
 # 1.0.0 (2026-08-21)
 
 
