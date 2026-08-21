@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>StudyLife Capture</title>
+  <link rel="stylesheet" href="popup.css" />
+</head>
+<body>
+  <div class="card">
+    <div class="brand">
+      <span class="brand-icon">&#10022;</span>
+      <span class="brand-name">StudyLife Capture</span>
+    </div>
+    <p>Select text on any page, then right-click &rarr; <strong>Save to StudyLife</strong>.</p>
+    <p class="hint">Connect your self-hosted instance below first.</p>
+
+    <form id="settings-form">
+      <label for="server-url">Server URL</label>
+      <input class="input" id="server-url" type="url" placeholder="https://studylife.example.com" required />
+
+      <label for="api-key">Capture API key</label>
+      <input class="input" id="api-key" type="password" placeholder="Generated in StudyLife → Setup" required />
+
+      <button class="btn-primary" type="submit">Save</button>
+      <p id="status" class="status" role="status"></p>
+    </form>
+  </div>
+  <script type="module" src="popup.js"></script>
+</body>
+</html>

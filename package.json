@@ -1,0 +1,17 @@
+{
+  "name": "studylife-capture",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Chrome extension: capture selected text/articles into StudyLife as notes",
+  "license": "AGPL-3.0",
+  "scripts": {
+    "build": "node build.mjs",
+    "watch": "node build.mjs --watch",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@types/chrome": "^0.0.280",
+    "esbuild": "^0.28.0",
+    "typescript": "^5.6.0"
+  }
+}
