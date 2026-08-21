@@ -25,6 +25,20 @@ form.addEventListener("submit", async (event) => {
     return;
   }
 
+  // No broad host_permissions declared upfront (see manifest.json) - instead, request access to
+  // exactly the one origin the user just typed in, right here in the submit handler so it still
+  // counts as a user gesture for chrome.permissions.request(). Persists once granted, so this is
+  // a no-op on every later save unless the user points the extension at a different origin.
+  const permission = await ensureHostPermission(serverUrl);
+  if (permission === "invalid-url") {
+    setStatus("Enter a valid server URL, e.g. https://studylife.example.com", "error");
+    return;
+  }
+  if (permission === "denied") {
+    setStatus("Permission to access this server was denied - required to save captures there.", "error");
+    return;
+  }
+
   await saveSettings({ serverUrl, apiKey });
 
   // Verify the pair actually works right away - a typo'd URL or an already-revoked key would
@@ -53,6 +67,17 @@ form.addEventListener("submit", async (event) => {
       break;
   }
 });
+
+async function ensureHostPermission(serverUrl: string): Promise<"granted" | "denied" | "invalid-url"> {
+  let origin: string;
+  try {
+    origin = `${new URL(serverUrl).origin}/*`;
+  } catch {
+    return "invalid-url";
+  }
+  if (await chrome.permissions.contains({ origins: [origin] })) return "granted";
+  return (await chrome.permissions.request({ origins: [origin] })) ? "granted" : "denied";
+}
 
 function setStatus(message: string, kind: "success" | "error"): void {
   status.textContent = message;
