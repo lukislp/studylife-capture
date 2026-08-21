@@ -8,15 +8,25 @@ const watch = process.argv.includes("--watch");
 
 mkdirSync("dist", { recursive: true });
 
-const entryPoints = ["src/background.ts", "src/popup.ts"];
-const buildOptions = {
-  entryPoints,
+const sharedOptions = {
   bundle: true,
   outdir: "dist",
-  format: "esm",
   target: "chrome120",
   sourcemap: watch ? "inline" : false,
   minify: !watch,
+};
+
+// Service worker + popup: real ES modules (manifest.json declares "type": "module" for the
+// background script; popup.html loads popup.js the same way).
+const moduleBuildOptions = { ...sharedOptions, entryPoints: ["src/background.ts", "src/popup.ts"], format: "esm" };
+
+// article-extractor.ts is injected into a page via chrome.scripting.executeScript({files: [...]})
+// as a classic script, not loaded as a module - "iife" so Readability's import gets inlined
+// into one self-contained file with no import statement left for the page to fail to resolve.
+const articleExtractorBuildOptions = {
+  ...sharedOptions,
+  entryPoints: ["src/article-extractor.ts"],
+  format: "iife",
 };
 
 function copyStaticFiles() {
@@ -29,12 +39,15 @@ function copyStaticFiles() {
 }
 
 if (watch) {
-  const ctx = await context(buildOptions);
-  await ctx.watch();
+  const [moduleCtx, articleCtx] = await Promise.all([
+    context(moduleBuildOptions),
+    context(articleExtractorBuildOptions),
+  ]);
+  await Promise.all([moduleCtx.watch(), articleCtx.watch()]);
   copyStaticFiles();
   console.log("Watching for changes...");
 } else {
-  await build(buildOptions);
+  await Promise.all([build(moduleBuildOptions), build(articleExtractorBuildOptions)]);
   copyStaticFiles();
   console.log("Built to dist/");
 }

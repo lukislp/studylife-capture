@@ -13,5 +13,8 @@
     "@types/chrome": "^0.0.280",
     "esbuild": "^0.28.0",
     "typescript": "^5.6.0"
+  },
+  "dependencies": {
+    "@mozilla/readability": "^0.6.0"
   }
 }
