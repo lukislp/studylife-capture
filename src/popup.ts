@@ -25,27 +25,37 @@ form.addEventListener("submit", async (event) => {
     return;
   }
 
-  // No broad host_permissions declared upfront (see manifest.json) - instead, request access to
-  // exactly the one origin the user just typed in, right here in the submit handler so it still
-  // counts as a user gesture for chrome.permissions.request(). Persists once granted, so this is
-  // a no-op on every later save unless the user points the extension at a different origin.
-  const permission = await ensureHostPermission(serverUrl);
-  if (permission === "invalid-url") {
+  let origin: string;
+  try {
+    origin = `${new URL(serverUrl).origin}/*`;
+  } catch {
     setStatus("Enter a valid server URL, e.g. https://studylife.example.com", "error");
     return;
   }
-  if (permission === "denied") {
-    setStatus("Permission to access this server was denied - required to save captures there.", "error");
+
+  // Save BEFORE requesting the host permission below - not after. Chrome's native permission
+  // prompt can steal window focus, and an extension action popup auto-closes the instant it
+  // loses focus, killing this whole async handler mid-await (found live: the popup closed right
+  // as the user clicked "Allow", so the saveSettings() call that used to come after this point
+  // never ran, and both fields were lost). Saving first means the data survives regardless of
+  // what happens to the popup once the permission prompt appears.
+  await saveSettings({ serverUrl, apiKey });
+
+  // No broad host_permissions declared upfront (see manifest.json) - instead, request access to
+  // exactly the one origin just saved above. Persists once granted, so this is a no-op on every
+  // later save unless the user points the extension at a different origin.
+  const granted = await requestHostPermission(origin);
+  if (!granted) {
+    setStatus(
+      "Saved, but permission to access this server was denied - captures won't work until it's granted (save again to retry).",
+      "error",
+    );
     return;
   }
 
-  await saveSettings({ serverUrl, apiKey });
-
   // Verify the pair actually works right away - a typo'd URL or an already-revoked key would
   // otherwise only surface later as a failed capture notification the user then has to trace
-  // back to these settings. Save happens unconditionally above (even if the test fails) - the
-  // server might just be temporarily unreachable, and the settings are still what the user
-  // wants stored for when it comes back.
+  // back to these settings.
   submitButton.disabled = true;
   setStatus("Checking connection…", "success");
   const result = await testConnection({ serverUrl, apiKey });
@@ -68,15 +78,9 @@ form.addEventListener("submit", async (event) => {
   }
 });
 
-async function ensureHostPermission(serverUrl: string): Promise<"granted" | "denied" | "invalid-url"> {
-  let origin: string;
-  try {
-    origin = `${new URL(serverUrl).origin}/*`;
-  } catch {
-    return "invalid-url";
-  }
-  if (await chrome.permissions.contains({ origins: [origin] })) return "granted";
-  return (await chrome.permissions.request({ origins: [origin] })) ? "granted" : "denied";
+async function requestHostPermission(origin: string): Promise<boolean> {
+  if (await chrome.permissions.contains({ origins: [origin] })) return true;
+  return chrome.permissions.request({ origins: [origin] });
 }
 
 function setStatus(message: string, kind: "success" | "error"): void {
