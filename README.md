@@ -156,7 +156,10 @@ page as a classic script, where an ES module `import` statement can't resolve).
 - [x] [Chrome Web Store listing](https://chromewebstore.google.com/detail/studylife-capture/glhegeoapkifmhodpnbfjgijlflkdglh) —
       submitted 2026-08-21 (v1.3.1), approved and live 2026-08-22 — under a day, well inside
       Google's own "up to a few weeks" estimate.
-- [ ] Accuracy measurement across a larger set of real captures.
+
+Course-matching/tag/summary accuracy across a larger set of real captures is tracked in
+[studylife-ai](https://github.com/lukislp/studylife-ai)'s own roadmap — that's where the actual
+enrichment logic lives, not here.
 
 ## Tech stack
 
