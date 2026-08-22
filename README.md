@@ -63,7 +63,9 @@ course.
 
 ## Installation
 
-Not yet published to the Chrome Web Store — install as an unpacked extension:
+**[Install from the Chrome Web Store](https://chromewebstore.google.com/detail/studylife-capture/glhegeoapkifmhodpnbfjgijlflkdglh)** — the easiest way, gets automatic updates.
+
+To install an unpacked build instead (e.g. to try an unreleased change):
 
 1. Download the latest `studylife-capture-vX.Y.Z.zip` from the
    [Releases page](https://github.com/lukislp/studylife-capture/releases) and unzip it somewhere
@@ -151,10 +153,9 @@ page as a classic script, where an ES module `import` statement can't resolve).
       a runtime request scoped to the exact server origin, and `activeTab` instead of a standing
       host grant for article extraction — narrows the permission surface a Chrome Web Store
       review actually looks at.
-- [ ] Chrome Web Store listing — submitted for review 2026-08-21 (v1.3.1), currently
-      install-as-unpacked only until it's approved and actually public. Developer account,
-      [privacy policy](PRIVACY.md), and the full submission (store listing copy, screenshots,
-      permission justifications) are all done — this only stays unchecked pending Google's review.
+- [x] [Chrome Web Store listing](https://chromewebstore.google.com/detail/studylife-capture/glhegeoapkifmhodpnbfjgijlflkdglh) —
+      submitted 2026-08-21 (v1.3.1), approved and live 2026-08-22 — under a day, well inside
+      Google's own "up to a few weeks" estimate.
 - [ ] Accuracy measurement across a larger set of real captures.
 
 ## Tech stack
