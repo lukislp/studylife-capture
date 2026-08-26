@@ -18,6 +18,28 @@ interface NoteDtoPayload {
   isMarkdown: boolean;
 }
 
+// The wire field names NoteDtoPayload sends, kept in sync with the interface above by the two
+// compile-time checks below. scripts/contract-check.mjs parses this array out of the source text
+// (by regex - it's plain Node with no TS toolchain) and diffs it against the committed OpenAPI
+// spec's NoteDto schema, so a server-side field rename/removal fails CI here instead of silently
+// 401/400-ing once the Web Store review finally lets a drifted build reach users.
+export const NOTE_PAYLOAD_FIELDS = [
+  "title",
+  "content",
+  "sourceUrl",
+  "courseId",
+  "sessionId",
+  "isMarkdown",
+] as const satisfies readonly (keyof NoteDtoPayload)[];
+
+// `satisfies` above only checks that every array entry is a real key of NoteDtoPayload. This
+// checks the reverse - that every key of NoteDtoPayload is listed in the array - so adding a
+// field to the interface without adding it here fails to typecheck instead of silently
+// desyncing the list the contract check relies on.
+type AllPayloadFieldsListed =
+  Exclude<keyof NoteDtoPayload, (typeof NOTE_PAYLOAD_FIELDS)[number]> extends never ? true : never;
+const allPayloadFieldsListed: AllPayloadFieldsListed = true;
+
 // A network round trip that hangs forever (unreachable server, no TCP reset) would otherwise
 // leave the user staring at "Saving..." indefinitely with no feedback - found relevant while
 // working through the offline/error-handling pass (S4).
