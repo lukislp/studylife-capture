@@ -1,3 +1,10 @@
+# [1.4.0](https://github.com/lukislp/studylife-capture/compare/v1.3.1...v1.4.0) (2026-08-27)
+
+
+### Features
+
+* connect via browser consent instead of manual key paste ([2edaf41](https://github.com/lukislp/studylife-capture/commit/2edaf41d1951b279b353ec047477863697474691))
+
 ## [1.3.1](https://github.com/lukislp/studylife-capture/compare/v1.3.0...v1.3.1) (2026-08-21)
 
 

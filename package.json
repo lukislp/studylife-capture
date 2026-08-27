@@ -1,6 +1,6 @@
 {
   "name": "studylife-capture",
-  "version": "1.3.1",
+  "version": "1.4.0",
   "private": true,
   "description": "Chrome extension: capture selected text/articles into StudyLife as notes",
   "license": "AGPL-3.0",
