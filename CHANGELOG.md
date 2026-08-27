@@ -1,3 +1,11 @@
+## [1.5.4](https://github.com/lukislp/studylife-capture/compare/v1.5.3...v1.5.4) (2026-08-27)
+
+
+### Bug Fixes
+
+* harden release chain against [skip ci] races and add unit test suite ([ef500eb](https://github.com/lukislp/studylife-capture/commit/ef500ebb597776f136b866b17c990fb06176f52f))
+* retrigger release chain (merge push of [#25](https://github.com/lukislp/studylife-capture/issues/25) spawned no workflow run) ([df30eb7](https://github.com/lukislp/studylife-capture/commit/df30eb708074d0b2f6d2415e1b62183cfb33c05a))
+
 ## [1.5.3](https://github.com/lukislp/studylife-capture/compare/v1.5.2...v1.5.3) (2026-08-27)
 
 
