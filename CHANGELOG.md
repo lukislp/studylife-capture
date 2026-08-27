@@ -1,3 +1,10 @@
+## [1.5.1](https://github.com/lukislp/studylife-capture/compare/v1.5.0...v1.5.1) (2026-08-27)
+
+
+### Bug Fixes
+
+* say what the connect button does once already connected ([8eb451c](https://github.com/lukislp/studylife-capture/commit/8eb451ca27a79d1b31b485c99e89148009810800))
+
 # [1.5.0](https://github.com/lukislp/studylife-capture/compare/v1.4.2...v1.5.0) (2026-08-27)
 
 
