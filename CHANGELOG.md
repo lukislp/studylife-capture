@@ -1,3 +1,11 @@
+## [1.4.1](https://github.com/lukislp/studylife-capture/compare/v1.4.0...v1.4.1) (2026-08-27)
+
+
+### Bug Fixes
+
+* make the connect click handler async for the awaited permission request ([f0df472](https://github.com/lukislp/studylife-capture/commit/f0df472f51062a8fd6c669a13ef13d5e0612ad8f))
+* request the host permission in the popup, not the service worker ([8c64c03](https://github.com/lukislp/studylife-capture/commit/8c64c03ccc27714e691a062728f86b7e35951e1a))
+
 # [1.4.0](https://github.com/lukislp/studylife-capture/compare/v1.3.1...v1.4.0) (2026-08-27)
 
 
