@@ -32,7 +32,10 @@ async function init(): Promise<void> {
 // on being alive by the time the flow finishes - it shows a "check for a window" hint immediately,
 // then updates the status only in the (uncommon) case the popup is still around to receive it.
 // The reliable outcome channel is the OS notification background.ts sends either way.
-connectButton.addEventListener("click", () => {
+// async is fine for the gesture: the permission request below runs before the first await
+// boundary consumes the transient activation (the contains() fast path resolves immediately,
+// and Chrome keeps the activation across the request prompt itself).
+connectButton.addEventListener("click", async () => {
   const serverUrl = normalizeServerUrl(serverUrlInput.value);
   if (!serverUrl) {
     setConnectStatus("Enter your StudyLife server URL first.", "error");
