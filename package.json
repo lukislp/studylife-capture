@@ -9,14 +9,16 @@
     "watch": "node build.mjs --watch",
     "typecheck": "tsc --noEmit",
     "package": "node zip.mjs",
-    "contract-check": "node scripts/contract-check.mjs"
+    "contract-check": "node scripts/contract-check.mjs",
+    "test": "vitest run"
   },
   "devDependencies": {
     "@types/archiver": "^8.0.0",
     "@types/chrome": "^0.0.280",
     "archiver": "^8.0.0",
     "esbuild": "^0.28.0",
-    "typescript": "^5.6.0"
+    "typescript": "^5.6.0",
+    "vitest": "^4.1.11"
   },
   "dependencies": {
     "@mozilla/readability": "^0.6.0"

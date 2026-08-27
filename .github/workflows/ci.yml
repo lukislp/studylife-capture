@@ -47,6 +47,7 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
           cache: npm
       - run: npm ci || (npm cache clean --force && npm ci)
+      - run: npm test
       - run: npm run build
       - run: npm run package
       - uses: actions/upload-artifact@v7
@@ -75,24 +76,25 @@ jobs:
       next_version: ${{ steps.semrel.outputs.new_release_version }}
       published: ${{ steps.semrel.outputs.new_release_published }}
     steps:
+      # ref: main (branch tip), not the default github.sha (the push event's SHA) - a "[skip ci]"
+      # commit (e.g. a version-bump commit from a previous release, or another push) can land on
+      # main between this workflow's trigger and this job actually starting. If this checked out
+      # github.sha instead, semantic-release's "local branch is behind the remote" guard would
+      # then analyze that now-stale SHA and silently skip the release entirely - no error, just
+      # nothing published (seen live in sibling studylife-* repos). ref: main always resolves to
+      # whatever main points to right now, so this also covers the older "Re-run jobs" staleness
+      # gap (two PRs merged minutes apart left get-version stuck on the first push's SHA on
+      # re-run) that used to need a manual `git fetch && git checkout -B main origin/main` step
+      # after checkout - no longer needed once checkout itself targets the branch tip.
       - uses: actions/checkout@v7.0.1
         with:
+          ref: main
           fetch-depth: 0
       - uses: actions/setup-node@v7.0.0
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: npm
       - run: npm ci || (npm cache clean --force && npm ci)
-      # actions/checkout above pins to github.sha - correct for a fresh push event, but a stale
-      # ref for a plain "Re-run jobs" on an old push once main has since moved past that commit
-      # (found live on studylife-ai: two PRs merged minutes apart left get-version permanently
-      # unable to see the second one's commits on re-run, since re-running reuses the original,
-      # by-then-stale github.sha rather than checking out the current tip). Applied here
-      # proactively from the start instead of waiting to hit the same bug.
-      - name: Sync to the current tip of main
-        run: |
-          git fetch origin main
-          git checkout -B main origin/main
       - id: semrel
         uses: cycjimmy/semantic-release-action@b12c8f6015dc215fe37bc154d4ad456dd3833c90 # v6.0.0
         with:
@@ -118,8 +120,16 @@ jobs:
       issues: write
       pull-requests: write
     steps:
+      # ref: main for the same [skip ci]-race reason as get-version above - branch tip may have
+      # moved past the triggering push by the time this job starts (get-version's dry run already
+      # analyzed the current tip and found something to publish, so this job must analyze that
+      # same tip, not a stale github.sha, or semantic-release's "local branch is behind the
+      # remote" guard silently releases nothing here too). This job also builds the version-
+      # stamped release zip below (after semantic-release's own version-bump commit), so the same
+      # checkout needs to already be sitting on main's tip for that commit to land correctly.
       - uses: actions/checkout@v7.0.1
         with:
+          ref: main
           fetch-depth: 0
       - uses: actions/setup-node@v7.0.0
         with:
