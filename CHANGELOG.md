@@ -1,3 +1,10 @@
+## [1.5.3](https://github.com/lukislp/studylife-capture/compare/v1.5.2...v1.5.3) (2026-08-27)
+
+
+### Bug Fixes
+
+* privacy policy no longer implies an in-popup manual key option ([10b7361](https://github.com/lukislp/studylife-capture/commit/10b73617c90b8fe3b9234adf005424b39c37ecb5))
+
 ## [1.5.2](https://github.com/lukislp/studylife-capture/compare/v1.5.1...v1.5.2) (2026-08-27)
 
 
