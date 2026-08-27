@@ -59,7 +59,7 @@ course.
   - The capture is embedded and indexed immediately, so it's searchable via StudyLife's own
     chat/agent right away instead of waiting for the next periodic sync.
 - **Clear error states** — a specific message for being offline, an invalid/revoked API key, or
-  an unreachable server, both when capturing and when testing your settings.
+  an unreachable server, both when capturing and when connecting.
 
 ## Installation
 
@@ -120,8 +120,8 @@ with a separate shared secret between StudyLife and studylife-ai the extension n
 ## Security notes
 
 - **No broad host access by default**: `http://*/*`/`https://*/*` are declared as
-  `optional_host_permissions`, not `host_permissions` — nothing is granted at install time. Either
-  connect path (browser or manual) requests access to exactly the one origin you're connecting to
+  `optional_host_permissions`, not `host_permissions` — nothing is granted at install time.
+  Connecting requests access to exactly the one origin you're connecting to
   (`chrome.permissions.request`, scoped to that origin only); the grant then persists, so this
   only happens again if you point the extension at a different server.
 - **Browser connect**: clicking **Connect with StudyLife** opens your own server's login/consent
@@ -131,8 +131,8 @@ with a separate shared secret between StudyLife and studylife-ai the extension n
   any third party; it's exchanged directly between your browser and your own server.
 - **API key storage**: the server URL and API key live in `chrome.storage.local`, local to your
   browser profile, however you obtained the key. The key itself is a long-lived, revocable secret
-  (StudyLife → Setup → generate a new one to rotate, or revoke to invalidate immediately) — never
-  StudyLife's own login credentials.
+  (reconnect from the popup to rotate it, or disconnect it on StudyLife's Setup → External
+  connections card to invalidate immediately) — never StudyLife's own login credentials.
 - **Minimal permissions**: `contextMenus`, `storage`, `notifications`, `scripting` (for injecting
   the Readability-based article extractor), `activeTab` (grants that injection host access to
   only the current tab, only in response to the context-menu click that triggered it — no

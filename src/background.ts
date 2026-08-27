@@ -3,7 +3,6 @@ import {
   describeConnectResult,
   isConnectMessage,
   parseAuthRedirect,
-  requestHostPermission,
   takePendingConnect,
   type ConnectResult,
 } from "./connect";
@@ -101,7 +100,7 @@ chrome.runtime.onMessage.addListener((message: unknown, sender, sendResponse) =>
 // Runs the whole browser-consent connect flow triggered by the "Connect with StudyLife" button in
 // popup.ts: requests the optional host permission for the user's server origin, opens the
 // passkey login/consent page via chrome.identity, exchanges the resulting assertion for a
-// CaptureApiKey, and stores it exactly where the manual-paste path does (settings.ts). See
+// CaptureApiKey, and stores it in extension storage (settings.ts). See
 // connect.ts's top comment for why this has to run in the service worker, not the popup.
 async function handleConnectRequest(rawServerUrl: string): Promise<ConnectResult> {
   const serverUrl = normalizeServerUrl(rawServerUrl);
@@ -208,7 +207,7 @@ async function capture(title: string, content: string, sourceUrl: string): Promi
     case "unauthorized":
       notify(
         "StudyLife Capture failed",
-        "Your API key is invalid or was revoked. Generate a new one in StudyLife's Setup page and update it in the extension popup.",
+        "Your API key is invalid or was revoked. Open the extension popup and reconnect with StudyLife to get a new one.",
       );
       break;
     case "http":

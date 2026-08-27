@@ -1,5 +1,5 @@
 ﻿import { CONNECT_MESSAGE_TYPE, clearPendingConnect, describeConnectResult, requestHostPermission, setPendingConnect, type ConnectResult } from "./connect";
-import { loadSettings, saveSettings, normalizeServerUrl } from "./settings";
+import { loadStoredSettings, saveSettings, normalizeServerUrl } from "./settings";
 
 const serverUrlInput = document.getElementById("server-url") as HTMLInputElement;
 const connectionHint = document.getElementById("connection-hint") as HTMLParagraphElement;
@@ -8,7 +8,7 @@ const connectButton = document.getElementById("connect-button") as HTMLButtonEle
 const connectStatus = document.getElementById("connect-status") as HTMLParagraphElement;
 
 async function init(): Promise<void> {
-  const existing = await loadSettings();
+  const existing = await loadStoredSettings();
   if (existing) {
     serverUrlInput.value = existing.serverUrl;
     // The URL alone is persisted as a draft the moment Connect is clicked (so a popup killed by
@@ -29,8 +29,8 @@ async function init(): Promise<void> {
 // Primary path: browser-consent connect via chrome.identity. See src/connect.ts for the full
 // design rationale - in short, this button's click is only used to kick the flow off; the actual
 // permission prompt, auth window, and token exchange all run in the background service worker,
-// because the auth window steals focus and closes this popup the moment it opens (the same
-// focus-loss failure the manual-save flow below already works around). So this handler can't rely
+// because the auth window steals focus and closes this popup the moment it opens. So this handler
+// can't rely
 // on being alive by the time the flow finishes - it shows a "check for a window" hint immediately,
 // then updates the status only in the (uncommon) case the popup is still around to receive it.
 // The reliable outcome channel is the OS notification background.ts sends either way.
@@ -60,7 +60,7 @@ connectButton.addEventListener("click", async () => {
   // Persist the URL immediately so a killed popup doesn't lose it - before this, the field was
   // only saved after a SUCCESSFUL connect, so the reopen-after-prompt landed on an empty form
   // (hit live). The existing apiKey (if any) is kept untouched.
-  const existingSettings = await loadSettings();
+  const existingSettings = await loadStoredSettings();
   await saveSettings({ serverUrl, apiKey: existingSettings?.apiKey ?? "" });
 
   // The host-permission request MUST happen here in the popup, inside the button's own user
@@ -84,7 +84,7 @@ connectButton.addEventListener("click", async () => {
     return;
   }
 
-  setConnectStatus("Opening StudyLife's login pageâ€¦ if a window opens, this popup will close - " +
+  setConnectStatus("Opening StudyLife's login page... if a window opens, this popup will close - " +
     "look for a confirmation notification once you're done.", "success");
 
   chrome.runtime

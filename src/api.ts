@@ -38,7 +38,7 @@ export const NOTE_PAYLOAD_FIELDS = [
 // desyncing the list the contract check relies on.
 type AllPayloadFieldsListed =
   Exclude<keyof NoteDtoPayload, (typeof NOTE_PAYLOAD_FIELDS)[number]> extends never ? true : never;
-const allPayloadFieldsListed: AllPayloadFieldsListed = true;
+true satisfies AllPayloadFieldsListed;
 
 // A network round trip that hangs forever (unreachable server, no TCP reset) would otherwise
 // leave the user staring at "Saving..." indefinitely with no feedback - found relevant while
@@ -46,8 +46,8 @@ const allPayloadFieldsListed: AllPayloadFieldsListed = true;
 const REQUEST_TIMEOUT_MS = 15_000;
 
 // A discriminated `kind` instead of a bare status/message pair, so callers (background.ts's
-// notification text, popup.ts's connection test) can give the user a specific, actionable
-// message per failure mode instead of a raw HTTP status or browser error string.
+// notification text) can give the user a specific, actionable message per failure mode instead
+// of a raw HTTP status or browser error string.
 export type CaptureResult =
   | { ok: true }
   | { ok: false; kind: "offline" }
@@ -55,10 +55,10 @@ export type CaptureResult =
   | { ok: false; kind: "http"; status: number; message: string }
   | { ok: false; kind: "network"; message: string };
 
-// The extension authenticates with a long-lived CaptureApiKey (generated in
-// StudyLife's Setup page, same pattern as the existing AiApiKey/McpApiKey) via the
-// server's unified X-Api-Key gate, which lets it call the existing /api/notes endpoint
-// directly - no dedicated /api/capture endpoint needed until S2's AI-enrichment forwarding.
+// The extension authenticates with a long-lived CaptureApiKey (provisioned via the browser
+// consent flow, see connect.ts/exchangeCaptureAssertion below) via the server's unified
+// X-Api-Key gate, which lets it call the existing /api/notes endpoint directly - no dedicated
+// /api/capture endpoint needed until S2's AI-enrichment forwarding.
 export async function saveCapture(
   settings: CaptureSettings,
   request: CaptureRequest,
@@ -103,16 +103,15 @@ export async function saveCapture(
 export type ExchangeResult =
   | { ok: true; captureApiKey: string; userId: number }
   | { ok: false; kind: "offline" }
-  // The server predates the browser-connect endpoint - callers should point the user at manual
-  // entry instead of retrying.
+  // The server predates the browser-connect endpoint - callers should tell the user to update
+  // their server instead of retrying.
   | { ok: false; kind: "not-found" }
   | { ok: false; kind: "http"; status: number; message: string }
   | { ok: false; kind: "network"; message: string };
 
 // Trades the passkey-signed assertion from the browser consent flow (connect.ts /
-// chrome.identity.launchWebAuthFlow) for a CaptureApiKey - the server-side counterpart to this is
-// the new POST /api/auth/capture-assertion-exchange endpoint, shipping in a parallel StudyLife
-// server PR (not merged yet as of this writing; see scripts/contract-check.mjs). Anonymous POST:
+// chrome.identity.launchWebAuthFlow) for a CaptureApiKey - the server-side counterpart is
+// POST /api/auth/capture-assertion-exchange (StudyLife's AuthController). Anonymous POST:
 // the assertion itself is the credential, there's no X-Api-Key to send yet since that's exactly
 // what this call is meant to produce.
 export async function exchangeCaptureAssertion(serverUrl: string, assertion: string): Promise<ExchangeResult> {
