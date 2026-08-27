@@ -103,3 +103,48 @@ export async function requestHostPermission(origin: string): Promise<boolean> {
   if (await chrome.permissions.contains({ origins: [origin] })) return true;
   return chrome.permissions.request({ origins: [origin] });
 }
+
+// Popup-death handoff for the connect flow: the host-permission prompt steals focus and closes
+// the popup, killing its JS BETWEEN the user's grant and the sendMessage that would start the
+// auth flow - the grant persists, but nothing continues (hit live: "grant, popup gone, reopen,
+// click again"). So the popup stakes a pending-connect marker BEFORE prompting, and
+// background.ts's chrome.permissions.onAdded listener takes it from there: grant lands -> the
+// service worker consumes the marker and opens the auth window itself, popup survival not
+// required. take* is consume-once and TTL-bound so a stale marker from an abandoned attempt
+// can't fire minutes later on an unrelated permission grant.
+const PENDING_CONNECT_KEY = "pendingConnect";
+const PENDING_CONNECT_TTL_MS = 2 * 60 * 1000;
+
+export async function setPendingConnect(serverUrl: string): Promise<void> {
+  await chrome.storage.local.set({ [PENDING_CONNECT_KEY]: { serverUrl, ts: Date.now() } });
+}
+
+export async function clearPendingConnect(): Promise<void> {
+  await chrome.storage.local.remove(PENDING_CONNECT_KEY);
+}
+
+// grantedOrigins: the origins of the permission grant that woke the caller - the marker is only
+// consumed when it actually belongs to one of them, so an unrelated grant (e.g. the manual-save
+// flow's own permission request) can neither trigger nor destroy a pending connect. A malformed
+// or expired marker is always cleaned up.
+export async function takePendingConnect(grantedOrigins: readonly string[]): Promise<string | null> {
+  const stored = (await chrome.storage.local.get(PENDING_CONNECT_KEY))[PENDING_CONNECT_KEY] as
+    | { serverUrl?: unknown; ts?: unknown }
+    | undefined;
+  if (!stored) return null;
+  if (typeof stored.serverUrl !== "string" || typeof stored.ts !== "number"
+      || Date.now() - stored.ts > PENDING_CONNECT_TTL_MS) {
+    await chrome.storage.local.remove(PENDING_CONNECT_KEY);
+    return null;
+  }
+  let origin: string;
+  try {
+    origin = `${new URL(stored.serverUrl).origin}/*`;
+  } catch {
+    await chrome.storage.local.remove(PENDING_CONNECT_KEY);
+    return null;
+  }
+  if (!grantedOrigins.includes(origin)) return null;
+  await chrome.storage.local.remove(PENDING_CONNECT_KEY);
+  return stored.serverUrl;
+}

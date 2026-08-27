@@ -1,5 +1,5 @@
-import { testConnection } from "./api";
-import { CONNECT_MESSAGE_TYPE, describeConnectResult, requestHostPermission, type ConnectResult } from "./connect";
+﻿import { testConnection } from "./api";
+import { CONNECT_MESSAGE_TYPE, clearPendingConnect, describeConnectResult, requestHostPermission, setPendingConnect, type ConnectResult } from "./connect";
 import { loadSettings, saveSettings, normalizeServerUrl } from "./settings";
 
 const serverUrlInput = document.getElementById("server-url") as HTMLInputElement;
@@ -19,8 +19,12 @@ async function init(): Promise<void> {
   if (existing) {
     serverUrlInput.value = existing.serverUrl;
     apiKeyInput.value = existing.apiKey;
-    connectionHint.textContent = `Connected to ${existing.serverUrl}`;
-    connectionHint.classList.add("success");
+    // The URL alone is persisted as a draft the moment Connect is clicked (so a popup killed by
+    // the permission prompt doesn't lose it) - only an actual key means "connected".
+    if (existing.apiKey) {
+      connectionHint.textContent = `Connected to ${existing.serverUrl}`;
+      connectionHint.classList.add("success");
+    }
   }
 }
 
@@ -55,21 +59,34 @@ connectButton.addEventListener("click", async () => {
 
   connectButton.disabled = true;
 
+  // Persist the URL immediately so a killed popup doesn't lose it - before this, the field was
+  // only saved after a SUCCESSFUL connect, so the reopen-after-prompt landed on an empty form
+  // (hit live). The existing apiKey (if any) is kept untouched.
+  const existingSettings = await loadSettings();
+  await saveSettings({ serverUrl, apiKey: existingSettings?.apiKey ?? "" });
+
   // The host-permission request MUST happen here in the popup, inside the button's own user
-  // gesture: chrome.permissions.request() from the service worker throws "This function must be
-  // called during a user gesture" - the transient-activation propagation across
-  // runtime.sendMessage the original design relied on does not reach permissions.request in
-  // practice (hit live on current Chrome). Same proven pattern as the manual-save flow above;
-  // same known trade-off too: the prompt can steal focus and close this popup mid-await, but the
-  // grant persists, so a second click then sails through the already-granted fast path.
-  const granted = await requestHostPermission(parsedUrl.origin + "/*");
-  if (!granted) {
-    connectButton.disabled = false;
-    setConnectStatus("Permission to access this server was denied - connecting needs it (click again to retry).", "error");
+  // gesture (permissions.request from the service worker throws). But the prompt steals focus
+  // and CLOSES this popup between the user's grant and any code after this await - so for the
+  // prompt path we don't continue from here at all: a pending-connect marker is staked first,
+  // and background.ts's permissions.onAdded listener starts the auth flow the moment the grant
+  // lands, popup survival not required (one click end-to-end). The already-granted fast path
+  // skips the marker and messages the worker directly, exactly as before.
+  const originPattern = parsedUrl.origin + "/*";
+  if (!(await chrome.permissions.contains({ origins: [originPattern] }))) {
+    await setPendingConnect(serverUrl);
+    setConnectStatus("Grant the permission prompt - StudyLife's login window then opens automatically.", "success");
+    const granted = await requestHostPermission(originPattern);
+    if (!granted) {
+      await clearPendingConnect();
+      connectButton.disabled = false;
+      setConnectStatus("Permission to access this server was denied - connecting needs it (click again to retry).", "error");
+    }
+    // Granted and still alive: nothing to do - the onAdded listener has already taken over.
     return;
   }
 
-  setConnectStatus("Opening StudyLife's login page… if a window opens, this popup will close - " +
+  setConnectStatus("Opening StudyLife's login pageâ€¦ if a window opens, this popup will close - " +
     "look for a confirmation notification once you're done.", "success");
 
   chrome.runtime
@@ -143,7 +160,7 @@ manualForm.addEventListener("submit", async (event) => {
   // otherwise only surface later as a failed capture notification the user then has to trace
   // back to these settings.
   manualSubmitButton.disabled = true;
-  setStatus("Checking connection…", "success");
+  setStatus("Checking connectionâ€¦", "success");
   const result = await testConnection({ serverUrl, apiKey });
   manualSubmitButton.disabled = false;
 
