@@ -1,6 +1,6 @@
 # Privacy Policy for StudyLife Capture
 
-_Last updated: 2026-08-21_
+_Last updated: 2026-08-27_
 
 StudyLife Capture is a browser extension that saves text you select or a full article you're
 reading into your own, self-hosted [StudyLife](https://github.com/lukislp/studylife) instance.
@@ -10,8 +10,9 @@ backend, account system, or analytics service behind it.
 ## What data the extension handles
 
 - **Server URL and API key** — the address of your StudyLife instance and a `CaptureApiKey`,
-  either generated manually there or obtained via the in-popup **Connect with StudyLife** button
-  (a passkey login/consent page on your own server, opened through Chrome's `identity` API).
+  obtained via the in-popup **Connect with StudyLife** button (a passkey login/consent page on
+  your own server, opened through Chrome's `identity` API; self-hosted setups the browser flow
+  can't reach can place a manually minted key in extension storage instead, see the README).
   Stored locally in your browser profile (`chrome.storage.local`), never transmitted anywhere
   except as the authentication header on requests to the server URL you entered.
 - **Page content you explicitly capture** — the selected text, or (for a full-article capture)
