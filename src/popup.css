@@ -160,59 +160,6 @@ label {
   cursor: default;
 }
 
-.btn-secondary {
-  background: var(--bg3);
-  color: var(--text);
-  border: 1px solid var(--border2);
-  border-radius: 8px;
-  padding: 0.65rem 1.25rem;
-  font-size: 0.875rem;
-  font-weight: 500;
-  font-family: var(--font);
-  cursor: pointer;
-  transition: var(--transition);
-  width: 100%;
-}
-
-.btn-secondary:hover {
-  border-color: var(--accent);
-}
-
-.btn-secondary:disabled {
-  opacity: 0.6;
-  cursor: default;
-}
-
-.btn-link {
-  display: block;
-  background: none;
-  border: none;
-  color: var(--text3);
-  font-family: var(--font);
-  font-size: 0.78rem;
-  text-decoration: underline;
-  text-underline-offset: 2px;
-  cursor: pointer;
-  padding: 0.7rem 0 0.2rem;
-  margin: 0 auto;
-  width: 100%;
-  text-align: center;
-}
-
-.btn-link:hover {
-  color: var(--text);
-}
-
-.manual-form {
-  margin-top: 0.6rem;
-  padding-top: 0.9rem;
-  border-top: 1px solid var(--border);
-}
-
-.manual-form .hint {
-  margin-bottom: 0.9rem;
-}
-
 .status {
   font-size: 0.8rem;
   min-height: 1.1rem;

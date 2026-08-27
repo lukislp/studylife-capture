@@ -2,8 +2,8 @@
 // StudyLife", i.e. where the trusted user gesture originates) and background.ts (which actually
 // runs the flow). It has to live in the service worker, not the popup, because
 // chrome.identity.launchWebAuthFlow()'s interactive auth window steals focus and closes the
-// extension popup mid-await - the exact same focus-loss failure popup.ts's manual-save flow
-// already hit with the plain chrome.permissions.request() prompt (see popup.ts). Running the
+// extension popup mid-await - the same focus-loss behavior the plain chrome.permissions.request()
+// prompt already shows (see popup.ts). Running the
 // whole chain (permission request, auth window, token exchange) in the service worker means it
 // survives regardless of what happens to the popup once either dialog opens.
 
@@ -87,7 +87,7 @@ export function describeConnectResult(result: ConnectResult): string {
     case "state-mismatch":
       return "Couldn't verify the connection response - try connecting again.";
     case "server-outdated":
-      return "This StudyLife server doesn't support browser connect yet - update it, or enter your API key manually below.";
+      return "This StudyLife server doesn't support browser connect yet - update the server, then try again.";
     case "offline":
       return "You're offline - connect again once you're back online.";
     case "exchange-failed":
@@ -95,10 +95,10 @@ export function describeConnectResult(result: ConnectResult): string {
   }
 }
 
-// Shared with popup.ts's manual-save flow (see popup.ts) - both request access to exactly the one
-// server origin being connected to, no broader host_permissions declared upfront (see
-// manifest.json). Persists once granted, so this is a no-op on every later call unless the user
-// points the extension at a different origin.
+// Called from popup.ts inside the Connect button's own user gesture (permissions.request throws
+// outside one) - requests access to exactly the one server origin being connected to, no broader
+// host_permissions declared upfront (see manifest.json). Persists once granted, so this is a
+// no-op on every later call unless the user points the extension at a different origin.
 export async function requestHostPermission(origin: string): Promise<boolean> {
   if (await chrome.permissions.contains({ origins: [origin] })) return true;
   return chrome.permissions.request({ origins: [origin] });
@@ -124,9 +124,9 @@ export async function clearPendingConnect(): Promise<void> {
 }
 
 // grantedOrigins: the origins of the permission grant that woke the caller - the marker is only
-// consumed when it actually belongs to one of them, so an unrelated grant (e.g. the manual-save
-// flow's own permission request) can neither trigger nor destroy a pending connect. A malformed
-// or expired marker is always cleaned up.
+// consumed when it actually belongs to one of them, so an unrelated grant (e.g. for a different
+// server origin) can neither trigger nor destroy a pending connect. A malformed or expired
+// marker is always cleaned up.
 export async function takePendingConnect(grantedOrigins: readonly string[]): Promise<string | null> {
   const stored = (await chrome.storage.local.get(PENDING_CONNECT_KEY))[PENDING_CONNECT_KEY] as
     | { serverUrl?: unknown; ts?: unknown }
