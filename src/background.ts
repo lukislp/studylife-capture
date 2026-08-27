@@ -1,9 +1,10 @@
-import { exchangeCaptureAssertion, saveCapture } from "./api";
+﻿import { exchangeCaptureAssertion, saveCapture } from "./api";
 import {
   describeConnectResult,
   isConnectMessage,
   parseAuthRedirect,
   requestHostPermission,
+  takePendingConnect,
   type ConnectResult,
 } from "./connect";
 import { loadSettings, normalizeServerUrl, saveSettings } from "./settings";
@@ -52,6 +53,20 @@ async function extractAndCaptureArticle(tab: chrome.tabs.Tab | undefined): Promi
     );
   }
 }
+
+// Popup-death handoff (see connect.ts's pending-connect comment): the host-permission prompt
+// closes the popup between the user's grant and any code after its await, so for the prompt
+// path the popup only stakes a pending-connect marker and requests - THIS listener continues
+// the flow the moment the grant lands. The marker is consume-once + TTL-bound (takePendingConnect),
+// and the origin check makes sure an unrelated permission grant can't trigger a stale connect.
+chrome.permissions.onAdded.addListener((added) => {
+  void (async () => {
+    const serverUrl = await takePendingConnect(added.origins ?? []);
+    if (!serverUrl) return;
+    await handleConnectRequest(serverUrl).catch((e: unknown) =>
+      finishConnect({ ok: false, kind: "auth-window-failed", message: e instanceof Error ? e.message : String(e) }));
+  })();
+});
 
 chrome.runtime.onMessage.addListener((message: unknown, sender, sendResponse) => {
   if (isConnectMessage(message)) {
