@@ -1,5 +1,12 @@
-import { saveCapture } from "./api";
-import { loadSettings } from "./settings";
+import { exchangeCaptureAssertion, saveCapture } from "./api";
+import {
+  describeConnectResult,
+  isConnectMessage,
+  parseAuthRedirect,
+  requestHostPermission,
+  type ConnectResult,
+} from "./connect";
+import { loadSettings, normalizeServerUrl, saveSettings } from "./settings";
 
 const SELECTION_MENU_ID = "save-selection-to-studylife";
 const ARTICLE_MENU_ID = "save-article-to-studylife";
@@ -46,17 +53,117 @@ async function extractAndCaptureArticle(tab: chrome.tabs.Tab | undefined): Promi
   }
 }
 
-chrome.runtime.onMessage.addListener((message: unknown, sender) => {
+chrome.runtime.onMessage.addListener((message: unknown, sender, sendResponse) => {
+  if (isConnectMessage(message)) {
+    // Returning true keeps the message channel open so the sendResponse below can fire once
+    // handleConnectRequest's async chain resolves - see connect.ts for why this whole flow lives
+    // here rather than in popup.ts. sendResponse is best-effort: if the popup already closed (the
+    // expected, common case once the auth window opens), this simply has no listener left to
+    // reach, and the notify() call inside handleConnectRequest is what the user actually sees.
+    void handleConnectRequest(message.serverUrl).then(sendResponse);
+    return true;
+  }
+
   if (typeof message !== "object" || message === null || (message as { type?: unknown }).type !== ARTICLE_EXTRACTED_MESSAGE) {
-    return;
+    return undefined;
   }
   const { title, content, error } = message as { title?: string; content?: string; error?: string };
   if (error) {
     notify("StudyLife Capture failed", error);
-    return;
+    return undefined;
   }
   void capture(title ?? sender.tab?.title ?? "Untitled", content ?? "", sender.tab?.url ?? "");
+  return undefined;
 });
+
+// Runs the whole browser-consent connect flow triggered by the "Connect with StudyLife" button in
+// popup.ts: requests the optional host permission for the user's server origin, opens the
+// passkey login/consent page via chrome.identity, exchanges the resulting assertion for a
+// CaptureApiKey, and stores it exactly where the manual-paste path does (settings.ts). See
+// connect.ts's top comment for why this has to run in the service worker, not the popup.
+async function handleConnectRequest(rawServerUrl: string): Promise<ConnectResult> {
+  const serverUrl = normalizeServerUrl(rawServerUrl);
+
+  let origin: string;
+  try {
+    origin = `${new URL(serverUrl).origin}/*`;
+  } catch {
+    return { ok: false, kind: "invalid-url" };
+  }
+
+  // Same helper, same reasoning as popup.ts's manual-save flow - just called from here so it
+  // survives the auth window stealing focus. Requires the click that sent the
+  // "studylife-capture:connect" message to still count as a user gesture by the time this runs;
+  // Chrome propagates transient user activation across runtime.sendMessage to the service worker
+  // (Chrome 121+). On an older Chrome the prompt may simply fail to appear, surfacing here as a
+  // denied request rather than a crash.
+  const granted = await requestHostPermission(origin);
+  if (!granted) {
+    return finishConnect({ ok: false, kind: "permission-denied" });
+  }
+
+  // A fresh random value per attempt, round-tripped through the redirect_uri's query string and
+  // checked back below - guards against a forged or stale redirect to the extension's
+  // chromiumapp.org callback URL being accepted as a real server response.
+  const state = crypto.randomUUID();
+  const authUrl = new URL("/connect/capture", serverUrl);
+  authUrl.searchParams.set("redirect_uri", chrome.identity.getRedirectURL());
+  authUrl.searchParams.set("state", state);
+
+  let responseUrl: string | undefined;
+  try {
+    responseUrl = await chrome.identity.launchWebAuthFlow({ url: authUrl.toString(), interactive: true });
+  } catch (error) {
+    // Chrome reports both "user closed the auth window" and "user clicked deny on the consent
+    // page" as a rejected promise with a generic message - no reliable way to tell them apart, so
+    // both surface as the same friendly "cancelled" result rather than a scary error.
+    const message = error instanceof Error ? error.message : String(error);
+    if (/did not approve|cancel/i.test(message)) {
+      return finishConnect({ ok: false, kind: "cancelled" });
+    }
+    return finishConnect({ ok: false, kind: "auth-window-failed", message });
+  }
+  if (!responseUrl) {
+    return finishConnect({ ok: false, kind: "cancelled" });
+  }
+
+  const redirectResult = parseAuthRedirect(responseUrl, state);
+  if (!redirectResult.ok) {
+    return finishConnect({ ok: false, kind: redirectResult.kind });
+  }
+
+  const exchange = await exchangeCaptureAssertion(serverUrl, redirectResult.assertion);
+  if (!exchange.ok) {
+    switch (exchange.kind) {
+      case "offline":
+        return finishConnect({ ok: false, kind: "offline" });
+      case "not-found":
+        return finishConnect({ ok: false, kind: "server-outdated" });
+      case "http":
+        return finishConnect({
+          ok: false,
+          kind: "exchange-failed",
+          message: exchange.message || `HTTP ${exchange.status}`,
+        });
+      case "network":
+        return finishConnect({ ok: false, kind: "exchange-failed", message: exchange.message });
+    }
+  }
+
+  await saveSettings({ serverUrl, apiKey: exchange.captureApiKey });
+  return finishConnect({ ok: true, serverUrl });
+}
+
+// Always notifies (the reliable channel - see handleConnectRequest's comment) and returns the
+// result unchanged, so every return path above can just be `return finishConnect(result)`.
+function finishConnect(result: ConnectResult): ConnectResult {
+  if (result.ok) {
+    notify("Connected to StudyLife", result.serverUrl);
+  } else {
+    notify("StudyLife Connect failed", describeConnectResult(result));
+  }
+  return result;
+}
 
 async function capture(title: string, content: string, sourceUrl: string): Promise<void> {
   const settings = await loadSettings();

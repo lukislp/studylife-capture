@@ -9,10 +9,11 @@ backend, account system, or analytics service behind it.
 
 ## What data the extension handles
 
-- **Server URL and API key** — the address of your StudyLife instance and the `CaptureApiKey`
-  you generate there. Stored locally in your browser profile (`chrome.storage.local`), never
-  transmitted anywhere except as the authentication header on requests to the server URL you
-  entered.
+- **Server URL and API key** — the address of your StudyLife instance and a `CaptureApiKey`,
+  either generated manually there or obtained via the in-popup **Connect with StudyLife** button
+  (a passkey login/consent page on your own server, opened through Chrome's `identity` API).
+  Stored locally in your browser profile (`chrome.storage.local`), never transmitted anywhere
+  except as the authentication header on requests to the server URL you entered.
 - **Page content you explicitly capture** — the selected text, or (for a full-article capture)
   the article content extracted by [Mozilla Readability](https://github.com/mozilla/readability),
   plus the page's title and URL. This is only collected when you deliberately trigger a capture
