@@ -78,12 +78,19 @@ To install an unpacked build instead (e.g. to try an unreleased change):
 1. Click the StudyLife Capture icon in Chrome's toolbar and enter your StudyLife server URL.
 2. Click **Connect with StudyLife** — this opens your instance's login page in a new window
    (passkey sign-in + consent), then hands a `CaptureApiKey` straight back to the extension. No
-   copy-pasting a key required.
-3. For servers the browser can't reach directly (e.g. a self-signed certificate on a local
-   network), use **Enter API key manually instead**: generate a key in StudyLife under
-   **Setup → studylife-capture**, then paste both the server URL and key into the extension popup.
-   The popup verifies the connection immediately either way, and tells you if the key is invalid
-   or the server can't be reached.
+   copy-pasting a key required — the browser consent flow is the only provisioning path (the
+   StudyLife setup page no longer offers a capture key to copy either).
+
+**Escape hatch for servers the auth window can't reach** (e.g. a self-signed certificate on a
+local network): mint a key against the API with your session and place it in extension storage
+yourself — there is deliberately no form for this anymore:
+
+```bash
+curl -s -X POST -H "X-Session-Token: <your session token>" \
+  https://<your-server>/api/settings/capture-api-key/generate
+# then, in the extension service worker console:
+# chrome.storage.local.set({ settings: { serverUrl: "https://<your-server>", apiKey: "<key>" } })
+```
 
 ## Architecture
 
