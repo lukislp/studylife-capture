@@ -19,20 +19,6 @@
 
     <button class="btn-primary" id="connect-button" type="button">Connect with StudyLife</button>
     <p id="connect-status" class="status" role="status"></p>
-
-    <button class="btn-link" id="toggle-manual" type="button" aria-expanded="false">
-      Enter API key manually instead
-    </button>
-
-    <form id="settings-form" class="manual-form" hidden>
-      <p class="hint">For servers the browser can't reach directly, e.g. a self-signed
-        certificate on your local network.</p>
-      <label for="api-key">Capture API key</label>
-      <input class="input" id="api-key" type="password" placeholder="Generated in StudyLife → Setup" required />
-
-      <button class="btn-secondary" type="submit">Save manually</button>
-      <p id="status" class="status" role="status"></p>
-    </form>
   </div>
   <script type="module" src="popup.js"></script>
 </body>

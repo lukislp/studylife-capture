@@ -100,32 +100,6 @@ export async function saveCapture(
   }
 }
 
-export type ConnectionTestResult =
-  | { ok: true }
-  | { ok: false; kind: "offline" }
-  | { ok: false; kind: "unauthorized" }
-  | { ok: false; kind: "network"; message: string };
-
-// Verifies a serverUrl/apiKey pair actually works, called from popup.ts right after the user
-// saves settings - so a typo'd URL or an already-revoked key is caught immediately instead of
-// only surfacing later as a failed capture notification the user then has to trace back to the
-// settings that caused it. GET /api/notes is the same endpoint saveCapture() itself needs
-// working credentials for, so a successful test here is a direct guarantee, not a proxy check.
-export async function testConnection(settings: CaptureSettings): Promise<ConnectionTestResult> {
-  if (typeof navigator !== "undefined" && navigator.onLine === false) {
-    return { ok: false, kind: "offline" };
-  }
-  const url = `${normalizeServerUrl(settings.serverUrl)}/api/notes`;
-  try {
-    const response = await fetchWithTimeout(url, { headers: { "X-Api-Key": settings.apiKey } });
-    if (response.status === 401) return { ok: false, kind: "unauthorized" };
-    if (!response.ok) return { ok: false, kind: "network", message: `HTTP ${response.status}` };
-    return { ok: true };
-  } catch (error) {
-    return { ok: false, kind: "network", message: describeError(error) };
-  }
-}
-
 export type ExchangeResult =
   | { ok: true; captureApiKey: string; userId: number }
   | { ok: false; kind: "offline" }
