@@ -75,10 +75,15 @@ To install an unpacked build instead (e.g. to try an unreleased change):
 
 ## Setup
 
-1. In StudyLife, go to **Setup → studylife-capture** and click **Generate API key**.
-2. Click the StudyLife Capture icon in Chrome's toolbar, enter your StudyLife server URL and the
-   generated API key, and save. The popup verifies the connection immediately and tells you if
-   the key is invalid or the server can't be reached.
+1. Click the StudyLife Capture icon in Chrome's toolbar and enter your StudyLife server URL.
+2. Click **Connect with StudyLife** — this opens your instance's login page in a new window
+   (passkey sign-in + consent), then hands a `CaptureApiKey` straight back to the extension. No
+   copy-pasting a key required.
+3. For servers the browser can't reach directly (e.g. a self-signed certificate on a local
+   network), use **Enter API key manually instead**: generate a key in StudyLife under
+   **Setup → studylife-capture**, then paste both the server URL and key into the extension popup.
+   The popup verifies the connection immediately either way, and tells you if the key is invalid
+   or the server can't be reached.
 
 ## Architecture
 
@@ -108,18 +113,24 @@ with a separate shared secret between StudyLife and studylife-ai the extension n
 ## Security notes
 
 - **No broad host access by default**: `http://*/*`/`https://*/*` are declared as
-  `optional_host_permissions`, not `host_permissions` — nothing is granted at install time. The
-  popup requests access to exactly the one origin you type into the settings form
-  (`chrome.permissions.request`, scoped to that origin only), the moment you save it; the grant
-  then persists, so this only happens again if you point the extension at a different server.
+  `optional_host_permissions`, not `host_permissions` — nothing is granted at install time. Either
+  connect path (browser or manual) requests access to exactly the one origin you're connecting to
+  (`chrome.permissions.request`, scoped to that origin only); the grant then persists, so this
+  only happens again if you point the extension at a different server.
+- **Browser connect**: clicking **Connect with StudyLife** opens your own server's login/consent
+  page via `chrome.identity.launchWebAuthFlow`, using a per-attempt random `state` value to make
+  sure the assertion that comes back is the one this specific attempt actually requested — not a
+  forged or replayed redirect. The resulting `CaptureApiKey` never passes through the developer or
+  any third party; it's exchanged directly between your browser and your own server.
 - **API key storage**: the server URL and API key live in `chrome.storage.local`, local to your
-  browser profile. The key itself is a long-lived, revocable secret (StudyLife → Setup → generate
-  a new one to rotate, or revoke to invalidate immediately) — never StudyLife's own login
-  credentials.
+  browser profile, however you obtained the key. The key itself is a long-lived, revocable secret
+  (StudyLife → Setup → generate a new one to rotate, or revoke to invalidate immediately) — never
+  StudyLife's own login credentials.
 - **Minimal permissions**: `contextMenus`, `storage`, `notifications`, `scripting` (for injecting
   the Readability-based article extractor), `activeTab` (grants that injection host access to
   only the current tab, only in response to the context-menu click that triggered it — no
-  standing host permission needed for article capture at all).
+  standing host permission needed for article capture at all), `identity` (opens the browser
+  connect flow's login window and provides its `chromiumapp.org` redirect URL — nothing else).
 - **No telemetry, no third-party requests**: the only network calls are to the StudyLife server
   origin you explicitly granted access to.
 

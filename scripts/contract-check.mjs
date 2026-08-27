@@ -12,6 +12,11 @@ import { existsSync, readFileSync } from "node:fs";
 
 const API_TS_PATH = new URL("../src/api.ts", import.meta.url);
 const NOTES_PATH = "/api/notes";
+// Only the JSON API endpoint is checked here, not GET /connect/capture - that's a browser-rendered
+// passkey login/consent page (see api.ts's exchangeCaptureAssertion doc comment), not a JSON API
+// route, so ASP.NET Core's Swagger generator has no reason to ever list it in the OpenAPI spec.
+// Checking for it here would just be permanently red, not "red until the server PR merges".
+const ASSERTION_EXCHANGE_PATH = "/api/auth/capture-assertion-exchange";
 const DEFAULT_SPEC_SOURCE = "https://raw.githubusercontent.com/lukislp/studylife/main/docs/api/openapi.json";
 
 async function main() {
@@ -24,6 +29,7 @@ async function main() {
   const errors = [];
   errors.push(...checkNotesRoutesExist(spec));
   errors.push(...checkPayloadFieldsExist(spec, payloadFields));
+  errors.push(...checkAssertionExchangeRouteExists(spec));
 
   if (errors.length > 0) {
     console.error("\nContract check FAILED - the extension's NoteDto payload has drifted from the API spec:\n");
@@ -101,6 +107,22 @@ function checkNotesRoutesExist(spec) {
     errors.push(`Spec is missing GET ${NOTES_PATH} (testConnection() depends on it).`);
   }
   return errors;
+}
+
+// Guards the browser-connect flow's exchange call (src/api.ts's exchangeCaptureAssertion) the
+// same way checkNotesRoutesExist() guards saveCapture()/testConnection() - fails loudly here
+// instead of only surfacing as a 404 once a build reaches users. Ships ahead of the server PR that
+// adds this endpoint (studylife's own repo), so this is EXPECTED to fail CI until that PR merges
+// and docs/api/openapi.json picks up the new route - not a bug in this check.
+function checkAssertionExchangeRouteExists(spec) {
+  const pathItem = spec?.paths?.[ASSERTION_EXCHANGE_PATH];
+  if (!pathItem) {
+    return [`Spec has no "${ASSERTION_EXCHANGE_PATH}" path (expected POST, used by the browser-connect flow).`];
+  }
+  if (!pathItem.post) {
+    return [`Spec is missing POST ${ASSERTION_EXCHANGE_PATH} (exchangeCaptureAssertion() depends on it).`];
+  }
+  return [];
 }
 
 function checkPayloadFieldsExist(spec, payloadFields) {

@@ -126,6 +126,53 @@ export async function testConnection(settings: CaptureSettings): Promise<Connect
   }
 }
 
+export type ExchangeResult =
+  | { ok: true; captureApiKey: string; userId: number }
+  | { ok: false; kind: "offline" }
+  // The server predates the browser-connect endpoint - callers should point the user at manual
+  // entry instead of retrying.
+  | { ok: false; kind: "not-found" }
+  | { ok: false; kind: "http"; status: number; message: string }
+  | { ok: false; kind: "network"; message: string };
+
+// Trades the passkey-signed assertion from the browser consent flow (connect.ts /
+// chrome.identity.launchWebAuthFlow) for a CaptureApiKey - the server-side counterpart to this is
+// the new POST /api/auth/capture-assertion-exchange endpoint, shipping in a parallel StudyLife
+// server PR (not merged yet as of this writing; see scripts/contract-check.mjs). Anonymous POST:
+// the assertion itself is the credential, there's no X-Api-Key to send yet since that's exactly
+// what this call is meant to produce.
+export async function exchangeCaptureAssertion(serverUrl: string, assertion: string): Promise<ExchangeResult> {
+  if (typeof navigator !== "undefined" && navigator.onLine === false) {
+    return { ok: false, kind: "offline" };
+  }
+  const url = `${normalizeServerUrl(serverUrl)}/api/auth/capture-assertion-exchange`;
+  try {
+    const response = await fetchWithTimeout(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ assertion }),
+    });
+    if (response.status === 404) {
+      return { ok: false, kind: "not-found" };
+    }
+    if (!response.ok) {
+      return { ok: false, kind: "http", status: response.status, message: await safeText(response) };
+    }
+    const body = (await response.json()) as { userId?: number; captureApiKey?: string };
+    if (!body.captureApiKey) {
+      return {
+        ok: false,
+        kind: "http",
+        status: response.status,
+        message: "Server response was missing captureApiKey.",
+      };
+    }
+    return { ok: true, captureApiKey: body.captureApiKey, userId: body.userId ?? 0 };
+  } catch (error) {
+    return { ok: false, kind: "network", message: describeError(error) };
+  }
+}
+
 async function fetchWithTimeout(url: string, init: RequestInit): Promise<Response> {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
