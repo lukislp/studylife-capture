@@ -60,7 +60,14 @@ chrome.runtime.onMessage.addListener((message: unknown, sender, sendResponse) =>
     // here rather than in popup.ts. sendResponse is best-effort: if the popup already closed (the
     // expected, common case once the auth window opens), this simply has no listener left to
     // reach, and the notify() call inside handleConnectRequest is what the user actually sees.
-    void handleConnectRequest(message.serverUrl).then(sendResponse);
+    // The .catch is load-bearing: an unhandled rejection here dies silently in the service
+    // worker and the user sees NOTHING - no window, no notification (exactly the failure mode
+    // the gesture crash produced). Any unexpected error must still reach finishConnect's
+    // notification channel.
+    void handleConnectRequest(message.serverUrl)
+      .catch((e: unknown) =>
+        finishConnect({ ok: false, kind: "auth-window-failed", message: e instanceof Error ? e.message : String(e) }))
+      .then(sendResponse);
     return true;
   }
 
@@ -91,13 +98,13 @@ async function handleConnectRequest(rawServerUrl: string): Promise<ConnectResult
     return { ok: false, kind: "invalid-url" };
   }
 
-  // Same helper, same reasoning as popup.ts's manual-save flow - just called from here so it
-  // survives the auth window stealing focus. Requires the click that sent the
-  // "studylife-capture:connect" message to still count as a user gesture by the time this runs;
-  // Chrome propagates transient user activation across runtime.sendMessage to the service worker
-  // (Chrome 121+). On an older Chrome the prompt may simply fail to appear, surfacing here as a
-  // denied request rather than a crash.
-  const granted = await requestHostPermission(origin);
+  // Contains-check ONLY - the actual permissions.request() happens in the popup, inside the
+  // button's own user gesture. Requesting from here crashed with "This function must be called
+  // during a user gesture": the transient-activation propagation across runtime.sendMessage the
+  // original design relied on does not reach permissions.request in practice (hit live). The
+  // popup grants before messaging us, so this is normally a formality; it only fails if the
+  // popup died before the grant landed - then the notification tells the user to click again.
+  const granted = await chrome.permissions.contains({ origins: [origin] });
   if (!granted) {
     return finishConnect({ ok: false, kind: "permission-denied" });
   }

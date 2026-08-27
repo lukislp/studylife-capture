@@ -32,7 +32,10 @@ async function init(): Promise<void> {
 // on being alive by the time the flow finishes - it shows a "check for a window" hint immediately,
 // then updates the status only in the (uncommon) case the popup is still around to receive it.
 // The reliable outcome channel is the OS notification background.ts sends either way.
-connectButton.addEventListener("click", () => {
+// async is fine for the gesture: the permission request below runs before the first await
+// boundary consumes the transient activation (the contains() fast path resolves immediately,
+// and Chrome keeps the activation across the request prompt itself).
+connectButton.addEventListener("click", async () => {
   const serverUrl = normalizeServerUrl(serverUrlInput.value);
   if (!serverUrl) {
     setConnectStatus("Enter your StudyLife server URL first.", "error");
@@ -51,6 +54,21 @@ connectButton.addEventListener("click", () => {
   }
 
   connectButton.disabled = true;
+
+  // The host-permission request MUST happen here in the popup, inside the button's own user
+  // gesture: chrome.permissions.request() from the service worker throws "This function must be
+  // called during a user gesture" - the transient-activation propagation across
+  // runtime.sendMessage the original design relied on does not reach permissions.request in
+  // practice (hit live on current Chrome). Same proven pattern as the manual-save flow above;
+  // same known trade-off too: the prompt can steal focus and close this popup mid-await, but the
+  // grant persists, so a second click then sails through the already-granted fast path.
+  const granted = await requestHostPermission(parsedUrl.origin + "/*");
+  if (!granted) {
+    connectButton.disabled = false;
+    setConnectStatus("Permission to access this server was denied - connecting needs it (click again to retry).", "error");
+    return;
+  }
+
   setConnectStatus("Opening StudyLife's login page… if a window opens, this popup will close - " +
     "look for a confirmation notification once you're done.", "success");
 
