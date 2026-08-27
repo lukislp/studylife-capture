@@ -1,3 +1,10 @@
+# [1.5.0](https://github.com/lukislp/studylife-capture/compare/v1.4.2...v1.5.0) (2026-08-27)
+
+
+### Features
+
+* drop the manual api-key entry - consent connect is the only path ([4de6793](https://github.com/lukislp/studylife-capture/commit/4de6793cd1e340b2e075ab8d1c502a1e72734b4d))
+
 ## [1.4.2](https://github.com/lukislp/studylife-capture/compare/v1.4.1...v1.4.2) (2026-08-27)
 
 
