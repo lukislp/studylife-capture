@@ -1,3 +1,10 @@
+## [1.4.2](https://github.com/lukislp/studylife-capture/compare/v1.4.1...v1.4.2) (2026-08-27)
+
+
+### Bug Fixes
+
+* survive the popup-killing permission prompt with one click ([7f776ad](https://github.com/lukislp/studylife-capture/commit/7f776ad007b1128890c9e85aabb37f7bad4b4ce6))
+
 ## [1.4.1](https://github.com/lukislp/studylife-capture/compare/v1.4.0...v1.4.1) (2026-08-27)
 
 
