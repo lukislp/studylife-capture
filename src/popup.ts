@@ -51,6 +51,21 @@ connectButton.addEventListener("click", () => {
   }
 
   connectButton.disabled = true;
+
+  // The host-permission request MUST happen here in the popup, inside the button's own user
+  // gesture: chrome.permissions.request() from the service worker throws "This function must be
+  // called during a user gesture" - the transient-activation propagation across
+  // runtime.sendMessage the original design relied on does not reach permissions.request in
+  // practice (hit live on current Chrome). Same proven pattern as the manual-save flow above;
+  // same known trade-off too: the prompt can steal focus and close this popup mid-await, but the
+  // grant persists, so a second click then sails through the already-granted fast path.
+  const granted = await requestHostPermission(parsedUrl.origin + "/*");
+  if (!granted) {
+    connectButton.disabled = false;
+    setConnectStatus("Permission to access this server was denied - connecting needs it (click again to retry).", "error");
+    return;
+  }
+
   setConnectStatus("Opening StudyLife's login page… if a window opens, this popup will close - " +
     "look for a confirmation notification once you're done.", "success");
 
