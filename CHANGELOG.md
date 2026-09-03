@@ -1,3 +1,10 @@
+## [1.5.5](https://github.com/lukislp/studylife-capture/compare/v1.5.4...v1.5.5) (2026-09-03)
+
+
+### Bug Fixes
+
+* **ci:** add Dependabot for github-actions, npm ([74fa8bb](https://github.com/lukislp/studylife-capture/commit/74fa8bbe169eddd52d84645fe0315fea7a0c8cf9))
+
 ## [1.5.4](https://github.com/lukislp/studylife-capture/compare/v1.5.3...v1.5.4) (2026-08-27)
 
 
