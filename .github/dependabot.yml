@@ -1,0 +1,18 @@
+# Weekly Dependabot updates: GitHub Actions and npm (dev deps grouped).
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    commit-message:
+      prefix: "fix(ci)"
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      dev:
+        dependency-type: development
+    commit-message:
+      prefix: "fix(deps)"
