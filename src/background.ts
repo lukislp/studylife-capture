@@ -30,7 +30,7 @@ chrome.runtime.onInstalled.addListener(() => {
 
 chrome.contextMenus.onClicked.addListener(async (info, tab) => {
   if (info.menuItemId === SELECTION_MENU_ID && info.selectionText) {
-    await capture(tab?.title ?? info.pageUrl, info.selectionText, info.pageUrl);
+    await capture(tab?.title ?? info.pageUrl ?? "Untitled", info.selectionText, info.pageUrl ?? "");
     return;
   }
   if (info.menuItemId === ARTICLE_MENU_ID) {
