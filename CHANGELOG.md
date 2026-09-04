@@ -1,3 +1,11 @@
+## [1.5.6](https://github.com/lukislp/studylife-capture/compare/v1.5.5...v1.5.6) (2026-09-04)
+
+
+### Bug Fixes
+
+* **deps:** bump the dev group with 2 updates ([54cab21](https://github.com/lukislp/studylife-capture/commit/54cab217b972b7c9ae3243fb038fb3710d14db8b))
+* guard undefined pageUrl/title in context menu capture ([db52f5b](https://github.com/lukislp/studylife-capture/commit/db52f5bb7cc2691c62e0af652b7b106437743f91))
+
 ## [1.5.5](https://github.com/lukislp/studylife-capture/compare/v1.5.4...v1.5.5) (2026-09-03)
 
 
