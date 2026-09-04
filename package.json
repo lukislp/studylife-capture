@@ -14,10 +14,10 @@
   },
   "devDependencies": {
     "@types/archiver": "^8.0.0",
-    "@types/chrome": "^0.0.280",
+    "@types/chrome": "^0.2.7",
     "archiver": "^8.0.0",
     "esbuild": "^0.28.0",
-    "typescript": "^5.6.0",
+    "typescript": "^7.0.2",
     "vitest": "^4.1.11"
   },
   "dependencies": {
