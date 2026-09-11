@@ -90,6 +90,29 @@ jobs:
         with:
           ref: main
           fetch-depth: 0
+      # Ruleset bypass for the release commit (2026-09-11 main-protection rollout): main is
+      # protected by a ruleset (pull request + green test stage) that the GitHub Actions app
+      # cannot be a bypass actor for on a personal repository, so semantic-release pushes over
+      # SSH as a write-enabled DEPLOY KEY instead, which can. No-op while the secret is unset -
+      # the push then goes through the GITHUB_TOKEN https remote exactly as before. Needed in
+      # get-version too: @semantic-release/git's verifyConditions runs `git push --dry-run`
+      # even in dry-run mode. Same mechanism as lukislp/studylife's ci-cd.yml.
+      - name: Push as the semantic-release deploy key (if configured)
+        env:
+          DEPLOY_KEY: ${{ secrets.SEMANTIC_RELEASE_DEPLOY_KEY }}
+        run: |
+          if [ -z "$DEPLOY_KEY" ]; then
+            echo "SEMANTIC_RELEASE_DEPLOY_KEY is not set - semantic-release pushes with GITHUB_TOKEN"
+            exit 0
+          fi
+          mkdir -p ~/.ssh && chmod 700 ~/.ssh
+          printf '%s\n' "$DEPLOY_KEY" > ~/.ssh/semantic_release
+          chmod 600 ~/.ssh/semantic_release
+          # github.com's published ed25519 host key, pinned instead of ssh-keyscan'd at runtime:
+          # https://docs.github.com/en/authentication/keychain/githubs-ssh-key-fingerprints
+          echo "github.com ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOMqqnkVzrm0SdG6UOoqKLsabgH5C9okWi0dh2l9GKJl" >> ~/.ssh/known_hosts
+          git remote set-url origin "git@github.com:${{ github.repository }}.git"
+          echo "GIT_SSH_COMMAND=ssh -i ~/.ssh/semantic_release -o IdentitiesOnly=yes" >> "$GITHUB_ENV"
       - uses: actions/setup-node@v7.0.0
         with:
           node-version: ${{ env.NODE_VERSION }}
@@ -131,6 +154,29 @@ jobs:
         with:
           ref: main
           fetch-depth: 0
+      # Ruleset bypass for the release commit (2026-09-11 main-protection rollout): main is
+      # protected by a ruleset (pull request + green test stage) that the GitHub Actions app
+      # cannot be a bypass actor for on a personal repository, so semantic-release pushes over
+      # SSH as a write-enabled DEPLOY KEY instead, which can. No-op while the secret is unset -
+      # the push then goes through the GITHUB_TOKEN https remote exactly as before. Needed in
+      # get-version too: @semantic-release/git's verifyConditions runs `git push --dry-run`
+      # even in dry-run mode. Same mechanism as lukislp/studylife's ci-cd.yml.
+      - name: Push as the semantic-release deploy key (if configured)
+        env:
+          DEPLOY_KEY: ${{ secrets.SEMANTIC_RELEASE_DEPLOY_KEY }}
+        run: |
+          if [ -z "$DEPLOY_KEY" ]; then
+            echo "SEMANTIC_RELEASE_DEPLOY_KEY is not set - semantic-release pushes with GITHUB_TOKEN"
+            exit 0
+          fi
+          mkdir -p ~/.ssh && chmod 700 ~/.ssh
+          printf '%s\n' "$DEPLOY_KEY" > ~/.ssh/semantic_release
+          chmod 600 ~/.ssh/semantic_release
+          # github.com's published ed25519 host key, pinned instead of ssh-keyscan'd at runtime:
+          # https://docs.github.com/en/authentication/keychain/githubs-ssh-key-fingerprints
+          echo "github.com ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOMqqnkVzrm0SdG6UOoqKLsabgH5C9okWi0dh2l9GKJl" >> ~/.ssh/known_hosts
+          git remote set-url origin "git@github.com:${{ github.repository }}.git"
+          echo "GIT_SSH_COMMAND=ssh -i ~/.ssh/semantic_release -o IdentitiesOnly=yes" >> "$GITHUB_ENV"
       - uses: actions/setup-node@v7.0.0
         with:
           node-version: ${{ env.NODE_VERSION }}
