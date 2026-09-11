@@ -1,0 +1,33 @@
+name: Dependabot auto-merge
+
+# Merges Dependabot patch and minor updates once every required check is green; majors stay
+# manual. Runs on pull_request_target so the base branch's workflow definition and the repo
+# secrets apply (a Dependabot-triggered pull_request run gets neither). Merges with
+# AUTOMERGE_TOKEN, a fine-grained PAT (contents + pull requests: write): a merge performed with
+# GITHUB_TOKEN would never start the release workflow, because GitHub does not run workflows for
+# events caused by GITHUB_TOKEN. Deliberately no checkout - PR code is never executed here.
+on:
+  pull_request_target:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  auto-merge:
+    if: github.actor == 'dependabot[bot]'
+    runs-on: ubuntu-latest
+    env:
+      HAS_TOKEN: ${{ secrets.AUTOMERGE_TOKEN != '' }}
+    steps:
+      - id: meta
+        uses: dependabot/fetch-metadata@21025c705c08248db411dc16f3619e6b5f9ea21a # v2.5.0
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+      - if: env.HAS_TOKEN == 'true' && (steps.meta.outputs.update-type == 'version-update:semver-patch' || steps.meta.outputs.update-type == 'version-update:semver-minor')
+        env:
+          GH_TOKEN: ${{ secrets.AUTOMERGE_TOKEN }}
+        run: gh pr merge --auto --merge "${{ github.event.pull_request.html_url }}"
+      - if: env.HAS_TOKEN != 'true'
+        run: echo "AUTOMERGE_TOKEN is not set - leaving this PR for a manual merge"
