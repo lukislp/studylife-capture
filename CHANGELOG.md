@@ -1,3 +1,10 @@
+## [1.5.9](https://github.com/lukislp/studylife-capture/compare/v1.5.8...v1.5.9) (2026-09-11)
+
+
+### Bug Fixes
+
+* **ci:** sign the release assets and attach build provenance ([#35](https://github.com/lukislp/studylife-capture/issues/35)) ([db540c6](https://github.com/lukislp/studylife-capture/commit/db540c6e6d94f6db8e1fac2cd0083d4715f14f40))
+
 ## [1.5.8](https://github.com/lukislp/studylife-capture/compare/v1.5.7...v1.5.8) (2026-09-11)
 
 
