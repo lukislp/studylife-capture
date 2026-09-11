@@ -1,3 +1,10 @@
+## [1.5.8](https://github.com/lukislp/studylife-capture/compare/v1.5.7...v1.5.8) (2026-09-11)
+
+
+### Bug Fixes
+
+* **ci:** read-only GITHUB_TOKEN in the Dependabot auto-merge workflow ([b958fcc](https://github.com/lukislp/studylife-capture/commit/b958fcce7be6c1f5dcc37cfdbe95a3ced8ea7d6c))
+
 ## [1.5.7](https://github.com/lukislp/studylife-capture/compare/v1.5.6...v1.5.7) (2026-09-11)
 
 
