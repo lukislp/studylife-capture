@@ -10,9 +10,9 @@ on:
   pull_request_target:
     types: [opened, synchronize, reopened]
 
+# GITHUB_TOKEN only reads PR metadata; the merge itself runs with AUTOMERGE_TOKEN (above).
 permissions:
-  contents: write
-  pull-requests: write
+  pull-requests: read
 
 jobs:
   auto-merge:
