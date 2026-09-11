@@ -1,3 +1,10 @@
+## [1.5.7](https://github.com/lukislp/studylife-capture/compare/v1.5.6...v1.5.7) (2026-09-11)
+
+
+### Bug Fixes
+
+* **ci:** push release commits as a deploy key so the default branch can be ruleset-protected ([f5ef58f](https://github.com/lukislp/studylife-capture/commit/f5ef58fa6f93f8fa319fbe4089d96f200bf4e083))
+
 ## [1.5.6](https://github.com/lukislp/studylife-capture/compare/v1.5.5...v1.5.6) (2026-09-04)
 
 
