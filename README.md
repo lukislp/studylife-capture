@@ -1,6 +1,6 @@
 # StudyLife Capture
 
-[![CI](https://github.com/lukislp/studylife-capture/actions/workflows/ci.yml/badge.svg)](https://github.com/lukislp/studylife-capture/actions/workflows/ci.yml)
+[![CI](https://github.com/lukislp/studylife-capture/actions/workflows/ci.yml/badge.svg)](https://github.com/lukislp/studylife-capture/actions/workflows/ci.yml) [![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/lukislp/studylife-capture/badge)](https://scorecard.dev/viewer/?uri=github.com/lukislp/studylife-capture) [![CodeQL](https://github.com/lukislp/studylife-capture/actions/workflows/github-code-scanning/codeql/badge.svg)](https://github.com/lukislp/studylife-capture/security/code-scanning)
 [![Release](https://img.shields.io/github/v/release/lukislp/studylife-capture)](https://github.com/lukislp/studylife-capture/releases)
 [![License: AGPL-3.0](https://img.shields.io/github/license/lukislp/studylife-capture)](LICENSE)
 [![Manifest V3](https://img.shields.io/badge/Manifest-V3-4285F4)](https://developer.chrome.com/docs/extensions/mv3/intro/)
