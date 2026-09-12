@@ -30,5 +30,7 @@ export async function saveSettings(settings: CaptureSettings): Promise<void> {
 // Strips a trailing slash so callers can safely do `${serverUrl}/api/...`
 // regardless of whether the user pasted a trailing slash in the popup's URL field.
 export function normalizeServerUrl(raw: string): string {
-  return raw.trim().replace(/\/+$/, "");
+  // Trailing whitespace and slashes in any mix ("host/ /"): stripping only slashes would
+  // leave a trailing space behind and make normalizing twice give two different results.
+  return raw.trim().replace(/[\s/]+$/, "");
 }
