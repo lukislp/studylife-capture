@@ -1,77 +1,22 @@
 name: Dependabot auto-merge
 
-# Merges Dependabot patch and minor updates once every required check is green; majors stay
-# manual. Runs on pull_request_target so the base branch's workflow definition and the repo
-# secrets apply (a Dependabot-triggered pull_request run gets neither). Merges with
-# AUTOMERGE_TOKEN, a fine-grained PAT (contents + pull requests: write): a merge performed with
-# GITHUB_TOKEN would never start the release workflow, because GitHub does not run workflows for
-# events caused by GITHUB_TOKEN. Deliberately no checkout - PR code is never executed here.
+# Thin caller of the shared implementation in lukislp/ci-workflows (auto-merge of Dependabot
+# patch/minor updates, update-stale for every PR that is behind the tip) - the triggers stay
+# here because a reusable workflow cannot declare them for the caller. Needs the AUTOMERGE_TOKEN
+# repository secret (fine-grained PAT, contents + pull requests write).
 on:
   pull_request_target:
-    # auto_merge_enabled: a PR that is already behind when someone arms auto-merge would
-    # otherwise wait for the next push to be brought up to date.
     types: [opened, synchronize, reopened, auto_merge_enabled]
-  # Safety net for a PR armed while behind when nothing else is pushed for a while.
   schedule:
     - cron: "23 * * * *"
-  # The default branch requires pull requests to be up to date before they merge (ruleset).
-  # Every push to it therefore leaves the open Dependabot PRs "behind"; the update-stale job
-  # below brings them back onto the tip so their auto-merge can proceed without a manual rebase.
   push:
     branches: [main]
 
-# GITHUB_TOKEN only reads PR metadata; the merge itself runs with AUTOMERGE_TOKEN (above).
 permissions:
   pull-requests: read
 
 jobs:
-  auto-merge:
-    if: github.event_name == 'pull_request_target' && github.event.action != 'auto_merge_enabled' && github.actor == 'dependabot[bot]'
-    runs-on: ubuntu-latest
-    env:
-      HAS_TOKEN: ${{ secrets.AUTOMERGE_TOKEN != '' }}
-    steps:
-      - id: meta
-        uses: dependabot/fetch-metadata@21025c705c08248db411dc16f3619e6b5f9ea21a # v2.5.0
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-      - if: env.HAS_TOKEN == 'true' && (steps.meta.outputs.update-type == 'version-update:semver-patch' || steps.meta.outputs.update-type == 'version-update:semver-minor')
-        env:
-          GH_TOKEN: ${{ secrets.AUTOMERGE_TOKEN }}
-        run: gh pr merge --auto --merge "${{ github.event.pull_request.html_url }}"
-      - if: env.HAS_TOKEN != 'true'
-        run: echo "AUTOMERGE_TOKEN is not set - leaving this PR for a manual merge"
-
-  update-stale:
-    if: github.event_name == 'push' || github.event_name == 'schedule' || github.event.action == 'auto_merge_enabled'
-    runs-on: ubuntu-latest
-    env:
-      HAS_TOKEN: ${{ secrets.AUTOMERGE_TOKEN != '' }}
-    steps:
-      - if: env.HAS_TOKEN == 'true'
-        env:
-          GH_TOKEN: ${{ secrets.AUTOMERGE_TOKEN }}
-          REPO: ${{ github.repository }}
-        # The default branch requires PRs to be up to date before they merge, so every push
-        # here leaves the other open PRs "behind". This brings them back onto the tip: every
-        # non-draft PR that has auto-merge enabled or was opened by a person (a Dependabot PR
-        # left for a manual decision, i.e. a major bump, is not rebuilt on every push - whoever
-        # merges it updates it). GitHub computes the merge state lazily after a push, so UNKNOWN
-        # is polled for a while; DIRTY (conflicts) cannot be updated automatically.
-        run: |
-          for n in $(gh pr list --repo "$REPO" --state open --json number --jq '.[].number'); do
-            info="$(gh pr view "$n" --repo "$REPO" --json isDraft,author,autoMergeRequest --jq '"\(.isDraft) \(.author.login) \(.autoMergeRequest != null)"')"
-            set -- $info
-            draft=$1; author=$2; auto=$3
-            [ "$draft" = "true" ] && continue
-            if [ "$auto" != "true" ] && [ "$author" = "app/dependabot" ]; then continue; fi
-            for attempt in 1 2 3 4 5 6; do
-              state="$(gh pr view "$n" --repo "$REPO" --json mergeStateStatus --jq .mergeStateStatus)"
-              [ "$state" != "UNKNOWN" ] && break
-              sleep 10
-            done
-            echo "#$n ($author, auto-merge=$auto): $state"
-            if [ "$state" = "BEHIND" ]; then
-              gh api -X PUT "repos/$REPO/pulls/$n/update-branch" >/dev/null && echo "  updated onto main" || echo "::warning::could not update #$n"
-            fi
-          done
+  dependabot:
+    uses: lukislp/ci-workflows/.github/workflows/dependabot-auto-merge.yml@7e63fcaccd6d5c152e694dea32184a2ce0823cd7 # v1.0.1
+    secrets:
+      AUTOMERGE_TOKEN: ${{ secrets.AUTOMERGE_TOKEN }}
