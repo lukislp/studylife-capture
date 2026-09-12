@@ -106,21 +106,9 @@ jobs:
       # get-version too: @semantic-release/git's verifyConditions runs `git push --dry-run`
       # even in dry-run mode. Same mechanism as lukislp/studylife's ci-cd.yml.
       - name: Push as the semantic-release deploy key (if configured)
-        env:
-          DEPLOY_KEY: ${{ secrets.SEMANTIC_RELEASE_DEPLOY_KEY }}
-        run: |
-          if [ -z "$DEPLOY_KEY" ]; then
-            echo "SEMANTIC_RELEASE_DEPLOY_KEY is not set - semantic-release pushes with GITHUB_TOKEN"
-            exit 0
-          fi
-          mkdir -p ~/.ssh && chmod 700 ~/.ssh
-          printf '%s\n' "$DEPLOY_KEY" > ~/.ssh/semantic_release
-          chmod 600 ~/.ssh/semantic_release
-          # github.com's published ed25519 host key, pinned instead of ssh-keyscan'd at runtime:
-          # https://docs.github.com/en/authentication/keychain/githubs-ssh-key-fingerprints
-          echo "github.com ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOMqqnkVzrm0SdG6UOoqKLsabgH5C9okWi0dh2l9GKJl" >> ~/.ssh/known_hosts
-          git remote set-url origin "git@github.com:${{ github.repository }}.git"
-          echo "GIT_SSH_COMMAND=ssh -i ~/.ssh/semantic_release -o IdentitiesOnly=yes" >> "$GITHUB_ENV"
+        uses: lukislp/ci-workflows/.github/actions/deploy-key-push@f3d5b5b26069f5678e813b2bc7440cb441aa28d0 # v1.1.0
+        with:
+          deploy-key: ${{ secrets.SEMANTIC_RELEASE_DEPLOY_KEY }}
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: ${{ env.NODE_VERSION }}
@@ -174,21 +162,9 @@ jobs:
       # get-version too: @semantic-release/git's verifyConditions runs `git push --dry-run`
       # even in dry-run mode. Same mechanism as lukislp/studylife's ci-cd.yml.
       - name: Push as the semantic-release deploy key (if configured)
-        env:
-          DEPLOY_KEY: ${{ secrets.SEMANTIC_RELEASE_DEPLOY_KEY }}
-        run: |
-          if [ -z "$DEPLOY_KEY" ]; then
-            echo "SEMANTIC_RELEASE_DEPLOY_KEY is not set - semantic-release pushes with GITHUB_TOKEN"
-            exit 0
-          fi
-          mkdir -p ~/.ssh && chmod 700 ~/.ssh
-          printf '%s\n' "$DEPLOY_KEY" > ~/.ssh/semantic_release
-          chmod 600 ~/.ssh/semantic_release
-          # github.com's published ed25519 host key, pinned instead of ssh-keyscan'd at runtime:
-          # https://docs.github.com/en/authentication/keychain/githubs-ssh-key-fingerprints
-          echo "github.com ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOMqqnkVzrm0SdG6UOoqKLsabgH5C9okWi0dh2l9GKJl" >> ~/.ssh/known_hosts
-          git remote set-url origin "git@github.com:${{ github.repository }}.git"
-          echo "GIT_SSH_COMMAND=ssh -i ~/.ssh/semantic_release -o IdentitiesOnly=yes" >> "$GITHUB_ENV"
+        uses: lukislp/ci-workflows/.github/actions/deploy-key-push@f3d5b5b26069f5678e813b2bc7440cb441aa28d0 # v1.1.0
+        with:
+          deploy-key: ${{ secrets.SEMANTIC_RELEASE_DEPLOY_KEY }}
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: ${{ env.NODE_VERSION }}
