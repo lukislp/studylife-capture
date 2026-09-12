@@ -24,6 +24,7 @@ permissions:
 jobs:
   lint:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
@@ -45,6 +46,7 @@ jobs:
   build:
     needs: [lint]
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
@@ -71,6 +73,7 @@ jobs:
     needs: [build]
     if: github.event_name == 'push'
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     # @semantic-release/github's verifyConditions step checks the token has repo push access
     # (contents: write) even during a dry run - a read-only token fails that check outright.
     # issues:write/pull-requests:write are NOT needed here: those only get exercised by the
@@ -143,6 +146,7 @@ jobs:
     needs: [get-version]
     if: github.event_name == 'push' && needs.get-version.outputs.published == 'true'
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     permissions:
       contents: write
       issues: write
