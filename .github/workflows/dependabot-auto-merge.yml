@@ -9,6 +9,11 @@ name: Dependabot auto-merge
 on:
   pull_request_target:
     types: [opened, synchronize, reopened]
+  # The default branch requires pull requests to be up to date before they merge (ruleset).
+  # Every push to it therefore leaves the open Dependabot PRs "behind"; the update-stale job
+  # below brings them back onto the tip so their auto-merge can proceed without a manual rebase.
+  push:
+    branches: [main]
 
 # GITHUB_TOKEN only reads PR metadata; the merge itself runs with AUTOMERGE_TOKEN (above).
 permissions:
@@ -31,3 +36,19 @@ jobs:
         run: gh pr merge --auto --merge "${{ github.event.pull_request.html_url }}"
       - if: env.HAS_TOKEN != 'true'
         run: echo "AUTOMERGE_TOKEN is not set - leaving this PR for a manual merge"
+
+  update-stale:
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    env:
+      HAS_TOKEN: ${{ secrets.AUTOMERGE_TOKEN != '' }}
+    steps:
+      - if: env.HAS_TOKEN == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.AUTOMERGE_TOKEN }}
+          REPO: ${{ github.repository }}
+        run: |
+          gh pr list --repo "$REPO" --author app/dependabot --state open --json number,mergeStateStatus             --jq '.[] | select(.mergeStateStatus == "BEHIND") | .number' | while read -r n; do
+            echo "updating #$n onto the default branch"
+            gh api -X PUT "repos/$REPO/pulls/$n/update-branch" >/dev/null || echo "::warning::could not update #$n"
+          done
