@@ -1,3 +1,10 @@
+## [1.5.10](https://github.com/lukislp/studylife-capture/compare/v1.5.9...v1.5.10) (2026-09-12)
+
+
+### Bug Fixes
+
+* **deps:** bump the dev group with 2 updates ([eb63d99](https://github.com/lukislp/studylife-capture/commit/eb63d99f2b5c49d0390ac47c72d32d108d405b4c))
+
 ## [1.5.9](https://github.com/lukislp/studylife-capture/compare/v1.5.8...v1.5.9) (2026-09-11)
 
 
