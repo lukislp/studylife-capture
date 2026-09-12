@@ -14,7 +14,7 @@ concurrency:
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 env:
-  NODE_VERSION: "22"
+  NODE_VERSION: "24"
 
 # Least-privilege default for GITHUB_TOKEN (CodeQL actions/missing-workflow-permissions):
 # jobs that need more declare it themselves.
