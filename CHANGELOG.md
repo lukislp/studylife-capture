@@ -1,3 +1,24 @@
+## [1.5.9](https://github.com/lukislp/studylife-capture/compare/v1.5.8...v1.5.9) (2026-09-11)
+
+
+### Bug Fixes
+
+* **ci:** sign the release assets and attach build provenance ([#35](https://github.com/lukislp/studylife-capture/issues/35)) ([db540c6](https://github.com/lukislp/studylife-capture/commit/db540c6e6d94f6db8e1fac2cd0083d4715f14f40))
+
+## [1.5.8](https://github.com/lukislp/studylife-capture/compare/v1.5.7...v1.5.8) (2026-09-11)
+
+
+### Bug Fixes
+
+* **ci:** read-only GITHUB_TOKEN in the Dependabot auto-merge workflow ([b958fcc](https://github.com/lukislp/studylife-capture/commit/b958fcce7be6c1f5dcc37cfdbe95a3ced8ea7d6c))
+
+## [1.5.7](https://github.com/lukislp/studylife-capture/compare/v1.5.6...v1.5.7) (2026-09-11)
+
+
+### Bug Fixes
+
+* **ci:** push release commits as a deploy key so the default branch can be ruleset-protected ([f5ef58f](https://github.com/lukislp/studylife-capture/commit/f5ef58fa6f93f8fa319fbe4089d96f200bf4e083))
+
 ## [1.5.6](https://github.com/lukislp/studylife-capture/compare/v1.5.5...v1.5.6) (2026-09-04)
 
 

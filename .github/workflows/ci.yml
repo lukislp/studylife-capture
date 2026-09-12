@@ -16,12 +16,17 @@ concurrency:
 env:
   NODE_VERSION: "22"
 
+# Least-privilege default for GITHUB_TOKEN (CodeQL actions/missing-workflow-permissions):
+# jobs that need more declare it themselves.
+permissions:
+  contents: read
+
 jobs:
   lint:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v7.0.1
-      - uses: actions/setup-node@v7.0.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: npm
@@ -41,8 +46,8 @@ jobs:
     needs: [lint]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v7.0.1
-      - uses: actions/setup-node@v7.0.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: npm
@@ -50,7 +55,7 @@ jobs:
       - run: npm test
       - run: npm run build
       - run: npm run package
-      - uses: actions/upload-artifact@v7
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: studylife-capture-zip
           path: release/*.zip
@@ -86,11 +91,34 @@ jobs:
       # gap (two PRs merged minutes apart left get-version stuck on the first push's SHA on
       # re-run) that used to need a manual `git fetch && git checkout -B main origin/main` step
       # after checkout - no longer needed once checkout itself targets the branch tip.
-      - uses: actions/checkout@v7.0.1
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: main
           fetch-depth: 0
-      - uses: actions/setup-node@v7.0.0
+      # Ruleset bypass for the release commit (2026-09-11 main-protection rollout): main is
+      # protected by a ruleset (pull request + green test stage) that the GitHub Actions app
+      # cannot be a bypass actor for on a personal repository, so semantic-release pushes over
+      # SSH as a write-enabled DEPLOY KEY instead, which can. No-op while the secret is unset -
+      # the push then goes through the GITHUB_TOKEN https remote exactly as before. Needed in
+      # get-version too: @semantic-release/git's verifyConditions runs `git push --dry-run`
+      # even in dry-run mode. Same mechanism as lukislp/studylife's ci-cd.yml.
+      - name: Push as the semantic-release deploy key (if configured)
+        env:
+          DEPLOY_KEY: ${{ secrets.SEMANTIC_RELEASE_DEPLOY_KEY }}
+        run: |
+          if [ -z "$DEPLOY_KEY" ]; then
+            echo "SEMANTIC_RELEASE_DEPLOY_KEY is not set - semantic-release pushes with GITHUB_TOKEN"
+            exit 0
+          fi
+          mkdir -p ~/.ssh && chmod 700 ~/.ssh
+          printf '%s\n' "$DEPLOY_KEY" > ~/.ssh/semantic_release
+          chmod 600 ~/.ssh/semantic_release
+          # github.com's published ed25519 host key, pinned instead of ssh-keyscan'd at runtime:
+          # https://docs.github.com/en/authentication/keychain/githubs-ssh-key-fingerprints
+          echo "github.com ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOMqqnkVzrm0SdG6UOoqKLsabgH5C9okWi0dh2l9GKJl" >> ~/.ssh/known_hosts
+          git remote set-url origin "git@github.com:${{ github.repository }}.git"
+          echo "GIT_SSH_COMMAND=ssh -i ~/.ssh/semantic_release -o IdentitiesOnly=yes" >> "$GITHUB_ENV"
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: npm
@@ -119,6 +147,9 @@ jobs:
       contents: write
       issues: write
       pull-requests: write
+      # Keyless signing + build provenance for the release assets (see the last steps).
+      id-token: write
+      attestations: write
     steps:
       # ref: main for the same [skip ci]-race reason as get-version above - branch tip may have
       # moved past the triggering push by the time this job starts (get-version's dry run already
@@ -127,11 +158,34 @@ jobs:
       # remote" guard silently releases nothing here too). This job also builds the version-
       # stamped release zip below (after semantic-release's own version-bump commit), so the same
       # checkout needs to already be sitting on main's tip for that commit to land correctly.
-      - uses: actions/checkout@v7.0.1
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: main
           fetch-depth: 0
-      - uses: actions/setup-node@v7.0.0
+      # Ruleset bypass for the release commit (2026-09-11 main-protection rollout): main is
+      # protected by a ruleset (pull request + green test stage) that the GitHub Actions app
+      # cannot be a bypass actor for on a personal repository, so semantic-release pushes over
+      # SSH as a write-enabled DEPLOY KEY instead, which can. No-op while the secret is unset -
+      # the push then goes through the GITHUB_TOKEN https remote exactly as before. Needed in
+      # get-version too: @semantic-release/git's verifyConditions runs `git push --dry-run`
+      # even in dry-run mode. Same mechanism as lukislp/studylife's ci-cd.yml.
+      - name: Push as the semantic-release deploy key (if configured)
+        env:
+          DEPLOY_KEY: ${{ secrets.SEMANTIC_RELEASE_DEPLOY_KEY }}
+        run: |
+          if [ -z "$DEPLOY_KEY" ]; then
+            echo "SEMANTIC_RELEASE_DEPLOY_KEY is not set - semantic-release pushes with GITHUB_TOKEN"
+            exit 0
+          fi
+          mkdir -p ~/.ssh && chmod 700 ~/.ssh
+          printf '%s\n' "$DEPLOY_KEY" > ~/.ssh/semantic_release
+          chmod 600 ~/.ssh/semantic_release
+          # github.com's published ed25519 host key, pinned instead of ssh-keyscan'd at runtime:
+          # https://docs.github.com/en/authentication/keychain/githubs-ssh-key-fingerprints
+          echo "github.com ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOMqqnkVzrm0SdG6UOoqKLsabgH5C9okWi0dh2l9GKJl" >> ~/.ssh/known_hosts
+          git remote set-url origin "git@github.com:${{ github.repository }}.git"
+          echo "GIT_SSH_COMMAND=ssh -i ~/.ssh/semantic_release -o IdentitiesOnly=yes" >> "$GITHUB_ENV"
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: npm
@@ -193,3 +247,38 @@ jobs:
           gh release upload "$TAG" release/*.zip --clobber
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      # Signed release assets (OpenSSF Scorecard "Signed-Releases"): a keyless Sigstore
+      # signature bundle per asset plus one GitHub build-provenance attestation, uploaded next
+      # to the assets so a download can be verified offline:
+      #   cosign verify-blob --bundle <asset>.sigstore.json \
+      #     --certificate-identity-regexp '^https://github.com/lukislp/studylife-capture/' \
+      #     --certificate-oidc-issuer https://token.actions.githubusercontent.com <asset>
+      - uses: sigstore/cosign-installer@6f9f17788090df1f26f669e9d70d6ae9567deba6 # v4.1.2
+        if: steps.semrel.outcome == 'success' || steps.semrel_retry.outcome == 'success'
+      - name: Sign the release assets and attach the signature bundles
+        if: steps.semrel.outcome == 'success' || steps.semrel_retry.outcome == 'success'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ steps.semrel.outputs.new_release_git_tag || steps.semrel_retry.outputs.new_release_git_tag }}
+        run: |
+          for f in release/*.zip; do
+            cosign sign-blob --yes --bundle "$f.sigstore.json" "$f"
+            cosign verify-blob --bundle "$f.sigstore.json" \
+              --certificate-identity-regexp '^https://github.com/lukislp/studylife-capture/\.github/workflows/ci\.yml@refs/heads/main$' \
+              --certificate-oidc-issuer https://token.actions.githubusercontent.com "$f"
+            gh release upload "$TAG" "$f.sigstore.json" --clobber
+          done
+      - uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
+        if: steps.semrel.outcome == 'success' || steps.semrel_retry.outcome == 'success'
+        id: provenance
+        with:
+          subject-path: |
+            release/*.zip
+      - name: Attach the build provenance to the release
+        if: steps.semrel.outcome == 'success' || steps.semrel_retry.outcome == 'success'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ steps.semrel.outputs.new_release_git_tag || steps.semrel_retry.outputs.new_release_git_tag }}
+        run: |
+          cp "${{ steps.provenance.outputs.bundle-path }}" provenance.intoto.jsonl
+          gh release upload "$TAG" provenance.intoto.jsonl --clobber
