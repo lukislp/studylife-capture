@@ -27,7 +27,9 @@ describe("normalizeServerUrl (property-based)", () => {
   it("only ever removes trailing slashes, and removes all of them", () => {
     fc.assert(
       fc.property(
-        fc.string({ maxLength: 120 }).map((s) => s.trim().replace(/\/+$/, "")),
+        // A base with no trailing whitespace or slashes left, so appending slashes is the only
+        // thing normalizeServerUrl has to undo.
+        fc.string({ maxLength: 120 }).map((s) => s.trim().replace(/[\s/]+$/, "")),
         fc.integer({ min: 0, max: 5 }),
         (base, slashes) => {
           const normalized = normalizeServerUrl(`${base}${"/".repeat(slashes)}`);
