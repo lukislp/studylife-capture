@@ -1,0 +1,27 @@
+name: Dependency review
+
+# Thin caller of the shared implementation in lukislp/ci-workflows - the triggers stay here
+# because a reusable workflow cannot declare them for the caller. Compares the base and head
+# dependency graphs of a pull request and fails it when the PR introduces a dependency with a
+# known advisory, which Dependabot alerts would otherwise only report after the merge. The
+# check name in the branch ruleset is "review / dependency-review".
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+# One run per PR: a newer push cancels the run it supersedes.
+concurrency:
+  group: dependency-review-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  review:
+    uses: lukislp/ci-workflows/.github/workflows/dependency-review.yml@809ea750206cf61ae541cbcf5fc2802f685ba044 # v1.4.0
+    # pull-requests: write is what the summary comment needs; the called workflow keeps
+    # contents at read.
+    permissions:
+      contents: read
+      pull-requests: write
