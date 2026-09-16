@@ -4,6 +4,14 @@ on:
   push:
     branches: [main]
   pull_request:
+  # Manual trigger for the backfill-release-signatures job at the bottom of this file.
+  # Nothing else in this workflow runs on it.
+  workflow_dispatch:
+    inputs:
+      tags:
+        description: "Release tags to sign, space separated. Empty means the five most recent releases."
+        required: false
+        default: ""
 
 # One queue entry per ref (or per PR number, so successive pushes to the same PR don't queue
 # behind each other) - mirrors the other studylife-* repos' pipelines. Only PR runs get
@@ -23,6 +31,7 @@ permissions:
 
 jobs:
   lint:
+    if: github.event_name != 'workflow_dispatch'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -244,3 +253,80 @@ jobs:
         run: |
           cp "${{ steps.provenance.outputs.bundle-path }}" provenance.intoto.jsonl
           gh release upload "$TAG" provenance.intoto.jsonl --clobber
+
+  # ---------------------------------------------------------------------
+  # Signature backfill for older releases - manual dispatch only
+  # ---------------------------------------------------------------------
+  # Releases published before the signing step above existed carry no Sigstore bundle next
+  # to their assets, and OpenSSF Scorecard's "Signed-Releases" check grades the five most
+  # recent releases - so those older ones hold the score down until they age out. This job
+  # signs them after the fact: for every asset of the selected releases that has no
+  # <asset>.sigstore.json sibling yet, it downloads the asset, signs it keylessly, verifies
+  # the bundle and uploads the bundle next to the asset. Re-running it is a no-op for
+  # assets that already have a bundle.
+  #
+  # It deliberately lives in THIS workflow file instead of a file of its own. The keyless
+  # certificate's identity is "<repo>/<workflow path>@<ref>", so a dispatch of
+  # .github/workflows/ci.yml on refs/heads/main mints exactly the identity the
+  # release path mints, and the bundles satisfy the very same
+  # --certificate-identity-regexp the release job pins. That is asserted per asset below -
+  # a mismatch fails the step before anything is uploaded.
+  #
+  # No build provenance is attached here on purpose: attest-build-provenance would assert
+  # that this run built the artifact, which is false for an artifact downloaded from an
+  # older release.
+  backfill-release-signatures:
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    permissions:
+      contents: write
+      id-token: write
+    steps:
+      - uses: sigstore/cosign-installer@6f9f17788090df1f26f669e9d70d6ae9567deba6 # v4.1.2
+      - name: Sign the assets of releases that have no signature bundle yet
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+          TAGS: ${{ inputs.tags }}
+        run: |
+          set -euo pipefail
+          if [ -n "${TAGS// /}" ]; then
+            read -r -a TAG_LIST <<< "$TAGS"
+          else
+            mapfile -t TAG_LIST < <(gh release list --repo "$REPO" --limit 5 --json tagName --jq '.[].tagName')
+          fi
+          if [ "${#TAG_LIST[@]}" -eq 0 ]; then
+            echo "No releases to process."
+            exit 0
+          fi
+          echo "Releases to process: ${TAG_LIST[*]}"
+          WORK="$(mktemp -d)"
+          trap 'rm -rf "$WORK"' EXIT
+          SIGNED=0
+          for TAG in "${TAG_LIST[@]}"; do
+            [ -n "$TAG" ] || continue
+            ASSETS="$(gh release view "$TAG" --repo "$REPO" --json assets --jq '.assets[].name')"
+            while IFS= read -r NAME; do
+              [ -n "$NAME" ] || continue
+              # Signature bundles and provenance files are not themselves signed.
+              case "$NAME" in
+                *.sigstore.json | *.intoto.jsonl) continue ;;
+              esac
+              if printf '%s\n' "$ASSETS" | grep -Fxq "$NAME.sigstore.json"; then
+                echo "$TAG/$NAME: bundle already present, skipping"
+                continue
+              fi
+              echo "$TAG/$NAME: signing"
+              gh release download "$TAG" --repo "$REPO" --pattern "$NAME" --dir "$WORK" --clobber
+              cosign sign-blob --yes --bundle "$WORK/$NAME.sigstore.json" "$WORK/$NAME"
+              cosign verify-blob --bundle "$WORK/$NAME.sigstore.json" \
+                --certificate-identity-regexp '^https://github.com/lukislp/studylife-capture/\.github/workflows/ci\.yml@refs/heads/main$' \
+                --certificate-oidc-issuer https://token.actions.githubusercontent.com "$WORK/$NAME"
+              gh release upload "$TAG" "$WORK/$NAME.sigstore.json" --repo "$REPO" --clobber
+              # Release assets can be hundreds of megabytes, so don't keep them on disk.
+              rm -f "$WORK/$NAME" "$WORK/$NAME.sigstore.json"
+              SIGNED=$((SIGNED + 1))
+            done <<< "$ASSETS"
+          done
+          echo "Signature bundles uploaded: $SIGNED"
