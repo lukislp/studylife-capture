@@ -17,6 +17,6 @@ permissions:
 
 jobs:
   dependabot:
-    uses: lukislp/ci-workflows/.github/workflows/dependabot-auto-merge.yml@6359eceb62d0b73e016578fe970182a430aa0ba4 # v1.5.3
+    uses: lukislp/ci-workflows/.github/workflows/dependabot-auto-merge.yml@d6ea7363956999dc7b3695e8b446f6361b102c6b # v1.5.4
     secrets:
       AUTOMERGE_TOKEN: ${{ secrets.AUTOMERGE_TOKEN }}
