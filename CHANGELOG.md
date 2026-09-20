@@ -1,3 +1,10 @@
+## [1.5.11](https://github.com/lukislp/studylife-capture/compare/v1.5.10...v1.5.11) (2026-09-20)
+
+
+### Bug Fixes
+
+* **ci:** add Harden Runner in audit mode to every job ([#56](https://github.com/lukislp/studylife-capture/issues/56)) ([83705bb](https://github.com/lukislp/studylife-capture/commit/83705bbb7534b55f6bfdd5e3f535101f7cfc3d49))
+
 ## [1.5.10](https://github.com/lukislp/studylife-capture/compare/v1.5.9...v1.5.10) (2026-09-12)
 
 
