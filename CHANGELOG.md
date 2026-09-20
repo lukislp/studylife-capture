@@ -1,3 +1,10 @@
+## [1.5.12](https://github.com/lukislp/studylife-capture/compare/v1.5.11...v1.5.12) (2026-09-20)
+
+
+### Bug Fixes
+
+* **ci:** correct missing Harden Runner allowlist ports (github.com:22, crl:80) ([#58](https://github.com/lukislp/studylife-capture/issues/58)) ([d5c0004](https://github.com/lukislp/studylife-capture/commit/d5c00043bba7fb0480320ed61ca97de0289c1585))
+
 ## [1.5.11](https://github.com/lukislp/studylife-capture/compare/v1.5.10...v1.5.11) (2026-09-20)
 
 
