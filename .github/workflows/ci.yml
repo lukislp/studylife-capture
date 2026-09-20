@@ -43,6 +43,7 @@ jobs:
             *.blob.core.windows.net:443
             api.github.com:443
             fulcio.sigstore.dev:443
+            github.com:22
             github.com:443
             raw.githubusercontent.com:443
             registry.npmjs.org:443
@@ -84,6 +85,7 @@ jobs:
             *.blob.core.windows.net:443
             api.github.com:443
             fulcio.sigstore.dev:443
+            github.com:22
             github.com:443
             raw.githubusercontent.com:443
             registry.npmjs.org:443
@@ -139,6 +141,7 @@ jobs:
             *.blob.core.windows.net:443
             api.github.com:443
             fulcio.sigstore.dev:443
+            github.com:22
             github.com:443
             raw.githubusercontent.com:443
             registry.npmjs.org:443
@@ -211,6 +214,7 @@ jobs:
             *.blob.core.windows.net:443
             api.github.com:443
             fulcio.sigstore.dev:443
+            github.com:22
             github.com:443
             raw.githubusercontent.com:443
             registry.npmjs.org:443
@@ -367,6 +371,7 @@ jobs:
             *.blob.core.windows.net:443
             api.github.com:443
             fulcio.sigstore.dev:443
+            github.com:22
             github.com:443
             raw.githubusercontent.com:443
             registry.npmjs.org:443
