@@ -1,28 +1,22 @@
 {
-    "branches":  [
-                     "main"
-                 ],
-    "plugins":  [
-                    "@semantic-release/commit-analyzer",
-                    "@semantic-release/release-notes-generator",
-                    {
-                        "value":  [
-                                      "@semantic-release/npm",
-                                      {
-                                          "npmPublish":  false
-                                      }
-                                  ],
-                        "Count":  2
-                    },
-                    {
-                        "value":  [
-                                      "@semantic-release/exec",
-                                      {
-                                          "prepareCmd":  "node scripts/sync-manifest-version.mjs ${nextRelease.version} \u0026\u0026 npm run build \u0026\u0026 npm run package"
-                                      }
-                                  ],
-                        "Count":  2
-                    },
-                    "@semantic-release/github"
-                ]
+  "branches": [
+    "main"
+  ],
+  "plugins": [
+    "@semantic-release/commit-analyzer",
+    "@semantic-release/release-notes-generator",
+    [
+      "@semantic-release/npm",
+      {
+        "npmPublish": false
+      }
+    ],
+    [
+      "@semantic-release/exec",
+      {
+        "prepareCmd": "node scripts/sync-manifest-version.mjs ${nextRelease.version} && npm run build && npm run package"
+      }
+    ],
+    "@semantic-release/github"
+  ]
 }
