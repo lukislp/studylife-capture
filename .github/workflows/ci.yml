@@ -187,7 +187,7 @@ jobs:
           cache: npm
       - run: npm ci || (npm cache clean --force && npm ci)
       - id: semrel
-        uses: lukislp/ci-workflows/.github/actions/semantic-release@045f17628d155f7e56c2f6ebdbd473b31e247112 # v1.6.0
+        uses: lukislp/ci-workflows/.github/actions/semantic-release@a5f01cccfa7a63023b5a2f67993f771d856c0ee4 # v1.7.1
         with:
           dry-run: true
           github-token: ${{ secrets.GITHUB_TOKEN }}
@@ -258,7 +258,7 @@ jobs:
           cache: npm
       - run: npm ci || (npm cache clean --force && npm ci)
       - id: semrel
-        uses: lukislp/ci-workflows/.github/actions/semantic-release@045f17628d155f7e56c2f6ebdbd473b31e247112 # v1.6.0
+        uses: lukislp/ci-workflows/.github/actions/semantic-release@a5f01cccfa7a63023b5a2f67993f771d856c0ee4 # v1.7.1
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
         continue-on-error: true
@@ -278,7 +278,7 @@ jobs:
           git checkout -B main origin/main
       - if: steps.semrel.outcome == 'failure'
         id: semrel_retry
-        uses: lukislp/ci-workflows/.github/actions/semantic-release@045f17628d155f7e56c2f6ebdbd473b31e247112 # v1.6.0
+        uses: lukislp/ci-workflows/.github/actions/semantic-release@a5f01cccfa7a63023b5a2f67993f771d856c0ee4 # v1.7.1
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
       # @semantic-release/github no longer uploads the packaged .zip itself (removed from its
