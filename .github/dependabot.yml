@@ -10,12 +10,22 @@ updates:
     reviewers:
       - "lukislp"
     open-pull-requests-limit: 5
+    # A new release waits three days before Dependabot proposes it, except the lktec-bot
+    # workflows: those are our own and a fix there should reach every caller right away.
+    cooldown:
+      default-days: 3
+      exclude:
+        - "lukislp/lktec-bot*"
     # All lukislp/ci-workflows bumps share one PR, so they take one slot of the
     # limit and other actions (e.g. harden-runner) are not starved by them.
     groups:
       ci-workflows:
         patterns:
           - "lukislp/ci-workflows*"
+      # Same for the lktec-bot workflows (automerge, lockfiles, release): one PR per release.
+      lktec-bot:
+        patterns:
+          - "lukislp/lktec-bot*"
       # init, analyze and upload-sarif must run the same version - one PR for all.
       codeql-action:
         patterns:
