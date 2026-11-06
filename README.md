@@ -31,7 +31,7 @@ Reader View) instead of just the selection, plus "related notes" suggestions and
 indexing so a capture is findable right away, not after the next periodic sync. **S4** (polish):
 specific, actionable error messages for offline/invalid-key/unreachable-server cases, a
 connection test right in the settings popup, a packaged `.zip` release build, and full CI/CD
-(lint, typecheck, build, semantic-release, GitHub Release with the `.zip` attached).
+(lint, typecheck, build, releases cut by the lktec-bot release module with its rules in `.github/lktec-bot.yml`, GitHub Release with the `.zip` attached).
 
 Every milestone was verified against a real, running StudyLife + studylife-ai instance — not just
 unit tests — including a live production incident: the very first real capture assigned no course
@@ -164,7 +164,7 @@ page as a classic script, where an ES module `import` statement can't resolve).
 - [x] **S3** — Full-article extraction via Mozilla Readability, related-notes suggestions,
       immediate Qdrant indexing instead of waiting for the next periodic sync.
 - [x] **S4** — Specific offline/invalid-key/unreachable-server error messages, a connection test
-      in the settings popup, packaged `.zip` release build, full CI/CD with semantic-release.
+      in the settings popup, packaged `.zip` release build, full CI/CD with the lktec-bot release module.
 - [x] Production-verified course matching: found and fixed a live NetworkPolicy gap and a
       direct-course-embedding-confidence issue, confirmed with a real capture correctly assigned.
 - [x] Minimal permissions: replaced broad `host_permissions` with `optional_host_permissions` +
@@ -186,7 +186,7 @@ enrichment logic lives, not here.
 | Extension | Manifest V3, TypeScript (strict), esbuild |
 | Article extraction | [`@mozilla/readability`](https://github.com/mozilla/readability) |
 | Packaging | `archiver` (`npm run package` → Chrome-Web-Store-ready `.zip`) |
-| CI/CD | GitHub Actions (typecheck, `npm audit`, build, semantic-release, GitHub Release with the packaged `.zip` attached) |
+| CI/CD | GitHub Actions (typecheck, `npm audit`, build, lktec-bot release module, GitHub Release with the packaged `.zip` attached) |
 | Backend | [StudyLife](https://github.com/lukislp/studylife) (`POST /api/notes`, `X-Api-Key`) |
 | AI enrichment | [studylife-ai](https://github.com/lukislp/studylife-ai) (`POST /internal/enrich-capture`) |
 
