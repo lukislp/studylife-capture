@@ -1,22 +1,26 @@
 name: Dependabot auto-merge
 
-# Thin caller of the shared implementation in lukislp/ci-workflows (auto-merge of Dependabot
-# patch/minor updates, update-stale for every PR that is behind the tip) - the triggers stay
-# here because a reusable workflow cannot declare them for the caller. Needs the AUTOMERGE_TOKEN
-# repository secret (fine-grained PAT, contents + pull requests write).
+# Thin caller of the automerge workflow of lukislp/lktec-bot (a GitHub App: routine Dependabot
+# updates are approved and armed for auto-merge, every open pull request that falls behind
+# main is updated). The triggers stay here because a reusable workflow cannot declare them for
+# the caller. Needs the App installed on this repository and the two secrets LKTEC_BOT_APP_ID
+# and LKTEC_BOT_PRIVATE_KEY; the policy lives in .github/lktec-bot.yml on main.
 on:
   pull_request_target:
-    types: [opened, synchronize, reopened, auto_merge_enabled]
+    types: [opened, synchronize, reopened, ready_for_review, auto_merge_enabled]
   schedule:
     - cron: "23 * * * *"
   push:
     branches: [main]
+  workflow_dispatch:
 
 permissions:
-  pull-requests: read
+  contents: read
+  actions: read # the reusable workflow reads which commit of itself the run uses
 
 jobs:
-  dependabot:
-    uses: lukislp/ci-workflows/.github/workflows/dependabot-auto-merge.yml@ea532e9b173cf0e512c9d54c18886eebd0b0d1ab # v1.8.24
+  automerge:
+    uses: lukislp/lktec-bot/.github/workflows/automerge.yml@0c0eccf67f1f06f21fd110626322a92c92e4cb82 # v0.1.1
     secrets:
-      AUTOMERGE_TOKEN: ${{ secrets.AUTOMERGE_TOKEN }}
+      app-id: ${{ secrets.LKTEC_BOT_APP_ID }}
+      private-key: ${{ secrets.LKTEC_BOT_PRIVATE_KEY }}
