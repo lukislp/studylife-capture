@@ -28,6 +28,8 @@ env:
 # jobs that need more declare it themselves.
 permissions:
   contents: read
+  # The reusable release workflow resolves its own commit through the Actions API.
+  actions: read
 
 jobs:
   lint:
@@ -116,98 +118,46 @@ jobs:
 
   # ---------------------------------------------------------------------
   # Version / release - push to main only (mirrors studylife-ai's ci.yml
-  # pattern: semantic-release drives the version, @semantic-release/github
-  # attaches the packaged .zip as a GitHub Release asset instead of pushing
-  # a Docker image - this extension has nothing to containerize).
+  # pattern: the lktec-bot release module drives the version and creates the
+  # GitHub Release; publish-assets attaches the packaged .zip as a release
+  # asset instead of pushing a Docker image - this extension has nothing to
+  # containerize).
   # ---------------------------------------------------------------------
   get-version:
     needs: [build]
     if: github.event_name == 'push'
-    runs-on: ubuntu-latest
-    timeout-minutes: 20
-    # @semantic-release/github's verifyConditions step checks the token has repo push access
-    # (contents: write) even during a dry run - a read-only token fails that check outright.
-    # issues:write/pull-requests:write are NOT needed here: those only get exercised by the
-    # publish/success/fail lifecycle steps, which dry_run: true skips entirely.
-    permissions:
-      contents: write
-    outputs:
-      next_version: ${{ steps.semrel.outputs.new_release_version }}
-      published: ${{ steps.semrel.outputs.new_release_published }}
-    steps:
-      - name: Harden Runner
-        uses: step-security/harden-runner@46b06cea07f9e64621fdf066ba77ac6915163d43 # v2.22.3
-        with:
-          egress-policy: block
-          allowed-endpoints: >
-            *.githubapp.com:443
-            *.blob.core.windows.net:443
-            api.github.com:443
-            fulcio.sigstore.dev:443
-            github.com:22
-            github.com:443
-            raw.githubusercontent.com:443
-            registry.npmjs.org:443
-            rekor.sigstore.dev:443
-            release-assets.githubusercontent.com:443
-            results-receiver.actions.githubusercontent.com:443
-            run-actions-*.actions.githubusercontent.com:443
-            timestamp.sigstore.dev:443
-            token.actions.githubusercontent.com:443
-            tuf-repo-cdn.sigstore.dev:443
-            uploads.github.com:443
-      # ref: main (branch tip), not the default github.sha (the push event's SHA) - a "[skip ci]"
-      # commit (e.g. a version-bump commit from a previous release, or another push) can land on
-      # main between this workflow's trigger and this job actually starting. If this checked out
-      # github.sha instead, semantic-release's "local branch is behind the remote" guard would
-      # then analyze that now-stale SHA and silently skip the release entirely - no error, just
-      # nothing published (seen live in sibling studylife-* repos). ref: main always resolves to
-      # whatever main points to right now, so this also covers the older "Re-run jobs" staleness
-      # gap (two PRs merged minutes apart left get-version stuck on the first push's SHA on
-      # re-run) that used to need a manual `git fetch && git checkout -B main origin/main` step
-      # after checkout - no longer needed once checkout itself targets the branch tip.
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          ref: main
-          fetch-depth: 0
-      # Ruleset bypass for the release commit (2026-09-11 main-protection rollout): main is
-      # protected by a ruleset (pull request + green test stage) that the GitHub Actions app
-      # cannot be a bypass actor for on a personal repository, so semantic-release pushes over
-      # SSH as a write-enabled DEPLOY KEY instead, which can. No-op while the secret is unset -
-      # the push then goes through the GITHUB_TOKEN https remote exactly as before. Needed in
-      # get-version too: @semantic-release/git's verifyConditions runs `git push --dry-run`
-      # even in dry-run mode. Same mechanism as lukislp/studylife's ci-cd.yml.
-      - name: Push as the semantic-release deploy key (if configured)
-        uses: lukislp/ci-workflows/.github/actions/deploy-key-push@ea532e9b173cf0e512c9d54c18886eebd0b0d1ab # v1.8.24
-        with:
-          deploy-key: ${{ secrets.SEMANTIC_RELEASE_DEPLOY_KEY }}
-      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: npm
-      - run: npm ci || (npm cache clean --force && npm ci)
-      - id: semrel
-        uses: lukislp/ci-workflows/.github/actions/semantic-release@ea532e9b173cf0e512c9d54c18886eebd0b0d1ab # v1.8.24
-        with:
-          dry-run: true
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-      - name: No release needed for this push
-        if: steps.semrel.outputs.new_release_published != 'true'
-        run: |
-          echo "No releasable commits since the last tag (e.g. docs/ci/chore-only) - this is the expected, common case with Conventional Commits, not a failure. semantic-release below skips itself via needs.get-version.outputs.published." | tee -a "$GITHUB_STEP_SUMMARY"
+    uses: lukislp/lktec-bot/.github/workflows/release.yml@ba6a835404962f464956ae8d4d05309e97b882c2 # v0.1.2
+    with:
+      dry-run: true
+    secrets:
+      app-id: ${{ secrets.LKTEC_BOT_APP_ID }}
+      private-key: ${{ secrets.LKTEC_BOT_PRIVATE_KEY }}
 
-  semantic-release:
+  release:
     needs: [get-version]
-    if: github.event_name == 'push' && needs.get-version.outputs.published == 'true'
+    if: github.event_name == 'push' && needs.get-version.outputs.released == 'true'
+    uses: lukislp/lktec-bot/.github/workflows/release.yml@ba6a835404962f464956ae8d4d05309e97b882c2 # v0.1.2
+    secrets:
+      app-id: ${{ secrets.LKTEC_BOT_APP_ID }}
+      private-key: ${{ secrets.LKTEC_BOT_PRIVATE_KEY }}
+
+  # Builds the packaged extension at the released version and attaches it, its Sigstore bundle and the
+  # build provenance to the GitHub Release the `release` job created. The tag is created by the
+  # lktec-bot App through the API (no signature on the tag); these assets are what to verify.
+  publish-assets:
+    needs: [release]
+    if: needs.release.outputs.released == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 20
     permissions:
       contents: write
-      issues: write
-      pull-requests: write
       # Keyless signing + build provenance for the release assets (see the last steps).
       id-token: write
       attestations: write
+    env:
+      TAG: ${{ needs.release.outputs.tag }}
+      VERSION: ${{ needs.release.outputs.version }}
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
       - name: Harden Runner
         uses: step-security/harden-runner@46b06cea07f9e64621fdf066ba77ac6915163d43 # v2.22.3
@@ -230,78 +180,24 @@ jobs:
             token.actions.githubusercontent.com:443
             tuf-repo-cdn.sigstore.dev:443
             uploads.github.com:443
-      # ref: main for the same [skip ci]-race reason as get-version above - branch tip may have
-      # moved past the triggering push by the time this job starts (get-version's dry run already
-      # analyzed the current tip and found something to publish, so this job must analyze that
-      # same tip, not a stale github.sha, or semantic-release's "local branch is behind the
-      # remote" guard silently releases nothing here too). This job also builds the version-
-      # stamped release zip below (after semantic-release's own version-bump commit), so the same
-      # checkout needs to already be sitting on main's tip for that commit to land correctly.
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          ref: main
-          fetch-depth: 0
-      # Ruleset bypass for the release commit (2026-09-11 main-protection rollout): main is
-      # protected by a ruleset (pull request + green test stage) that the GitHub Actions app
-      # cannot be a bypass actor for on a personal repository, so semantic-release pushes over
-      # SSH as a write-enabled DEPLOY KEY instead, which can. No-op while the secret is unset -
-      # the push then goes through the GITHUB_TOKEN https remote exactly as before. Needed in
-      # get-version too: @semantic-release/git's verifyConditions runs `git push --dry-run`
-      # even in dry-run mode. Same mechanism as lukislp/studylife's ci-cd.yml.
-      - name: Push as the semantic-release deploy key (if configured)
-        uses: lukislp/ci-workflows/.github/actions/deploy-key-push@ea532e9b173cf0e512c9d54c18886eebd0b0d1ab # v1.8.24
-        with:
-          deploy-key: ${{ secrets.SEMANTIC_RELEASE_DEPLOY_KEY }}
+          ref: ${{ needs.release.outputs.tag }}
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: npm
+      - name: Write the released version into manifest.json and package.json
+        run: |
+          node scripts/sync-manifest-version.mjs "$VERSION"
+          npm version "$VERSION" --no-git-tag-version --allow-same-version
       - run: npm ci || (npm cache clean --force && npm ci)
-      - id: semrel
-        uses: lukislp/ci-workflows/.github/actions/semantic-release@ea532e9b173cf0e512c9d54c18886eebd0b0d1ab # v1.8.24
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-        continue-on-error: true
-      # Retry once for the narrow window where an out-of-band push to main landed between this
-      # job's checkout and its own push (same pattern as studylife/studylife-ai's ci workflows).
-      - if: steps.semrel.outcome == 'failure'
-        name: "Diagnose before retrying (expected: an out-of-band push landed since checkout)"
-        run: |
-          git fetch origin main
-          BEFORE_SHA="$(git rev-parse HEAD)"
-          AFTER_SHA="$(git rev-parse origin/main)"
-          if [ "$BEFORE_SHA" != "$AFTER_SHA" ]; then
-            echo "origin/main moved since checkout ($BEFORE_SHA -> $AFTER_SHA) - this matches the out-of-band-push race this retry is designed for."
-          else
-            echo "::warning::origin/main did NOT move since checkout - this failure is likely NOT the expected out-of-band-push race. Retrying anyway, but check the semantic-release log above for the real cause before assuming this is just a race."
-          fi
-          git checkout -B main origin/main
-      - if: steps.semrel.outcome == 'failure'
-        id: semrel_retry
-        uses: lukislp/ci-workflows/.github/actions/semantic-release@ea532e9b173cf0e512c9d54c18886eebd0b0d1ab # v1.8.24
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-      # @semantic-release/github no longer uploads the packaged .zip itself (removed from its
-      # `assets` config in .releaserc.json). Its asset-upload call hit a reproducible Node/undici
-      # bug - "invalid content-length header", thrown while octokit builds the OUTGOING request
-      # for a binary body with an explicit numeric Content-Length header - on both v1.0.0 and
-      # v1.1.0's release, not a one-off race (octokit's own internal retry already tried 3 times
-      # first). It also left the GitHub Release stuck in draft both times: @semantic-release/github
-      # creates the release as a draft, uploads assets, then publishes it - an asset-upload
-      # exception skips that last step. `gh release upload` does the same job over a completely
-      # different HTTP stack (Go, not Node's built-in fetch/undici) and worked first-try both times
-      # this was fixed manually. Runs after EITHER semrel attempt succeeded - the working tree
-      # already has the version-bumped manifest.json/package.json from whichever one committed it,
-      # so a fresh build+package here always matches the tag being uploaded to.
+      - run: npm run build
+      - run: npm run package
+      # `gh release upload` instead of an upload through the release tooling: the Node/undici
+      # "invalid content-length header" bug hit octokit's binary upload on v1.0.0 and v1.1.0.
       - name: Upload the packaged .zip to the GitHub Release
-        if: steps.semrel.outcome == 'success' || steps.semrel_retry.outcome == 'success'
-        run: |
-          TAG="${{ steps.semrel.outputs.new_release_git_tag || steps.semrel_retry.outputs.new_release_git_tag }}"
-          npm run build
-          npm run package
-          gh release upload "$TAG" release/*.zip --clobber
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh release upload "$TAG" release/*.zip --clobber
       # Signed release assets (OpenSSF Scorecard "Signed-Releases"): a keyless Sigstore
       # signature bundle per asset plus one GitHub build-provenance attestation, uploaded next
       # to the assets so a download can be verified offline:
@@ -309,12 +205,7 @@ jobs:
       #     --certificate-identity-regexp '^https://github.com/lukislp/studylife-capture/' \
       #     --certificate-oidc-issuer https://token.actions.githubusercontent.com <asset>
       - uses: sigstore/cosign-installer@6f9f17788090df1f26f669e9d70d6ae9567deba6 # v4.1.2
-        if: steps.semrel.outcome == 'success' || steps.semrel_retry.outcome == 'success'
       - name: Sign the release assets and attach the signature bundles
-        if: steps.semrel.outcome == 'success' || steps.semrel_retry.outcome == 'success'
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          TAG: ${{ steps.semrel.outputs.new_release_git_tag || steps.semrel_retry.outputs.new_release_git_tag }}
         run: |
           for f in release/*.zip; do
             cosign sign-blob --yes --bundle "$f.sigstore.json" "$f"
@@ -324,16 +215,11 @@ jobs:
             gh release upload "$TAG" "$f.sigstore.json" --clobber
           done
       - uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
-        if: steps.semrel.outcome == 'success' || steps.semrel_retry.outcome == 'success'
         id: provenance
         with:
           subject-path: |
             release/*.zip
       - name: Attach the build provenance to the release
-        if: steps.semrel.outcome == 'success' || steps.semrel_retry.outcome == 'success'
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          TAG: ${{ steps.semrel.outputs.new_release_git_tag || steps.semrel_retry.outputs.new_release_git_tag }}
         run: |
           cp "${{ steps.provenance.outputs.bundle-path }}" provenance.intoto.jsonl
           gh release upload "$TAG" provenance.intoto.jsonl --clobber

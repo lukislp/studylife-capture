@@ -13,3 +13,13 @@ modules:
     method: squash
     # Dependency names (exact, case-insensitive) that are never approved or armed.
     exclude: []
+
+  # Tags and publishes a release from the Conventional Commits on the default branch (see
+  # docs/modules/release.md in lukislp/lktec-bot).
+  release:
+    enabled: true
+    mode: tag
+    tag-format: "v{version}"
+    branch: main            # the default branch
+    first-version: "1.0.0"  # only used while no tag matches tag-format
+    rules: []               # no custom release rules before the move

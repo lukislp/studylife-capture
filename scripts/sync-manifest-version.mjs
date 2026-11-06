@@ -1,9 +1,8 @@
 // Keeps manifest.json's own "version" field (the one Chrome/the Web Store actually reads) in
-// sync with the version semantic-release computes and writes into package.json - the two are
-// independent files with no automatic link, same reason the HACS integrations sync their own
-// manifest.json's version this way. Called from .releaserc.json's @semantic-release/exec
-// prepareCmd, after @semantic-release/npm has already bumped package.json, so both land in the
-// same @semantic-release/git commit.
+// sync with the version the release workflow publishes (and writes into package.json) - the two
+// are independent files with no automatic link, same reason the HACS integrations sync their own
+// manifest.json's version this way. Called from the publish-assets job of ci.yml before the
+// release zip is built, so the zip carries the released version.
 import { readFileSync, writeFileSync } from "node:fs";
 
 const version = process.argv[2];
