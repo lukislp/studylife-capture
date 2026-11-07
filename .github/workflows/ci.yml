@@ -126,7 +126,7 @@ jobs:
   get-version:
     needs: [build]
     if: github.event_name == 'push'
-    uses: lukislp/lktec-bot/.github/workflows/release.yml@f1dbc56e0810b5f78691019889fc76cf5423d7fa # v0.3.0
+    uses: lukislp/lktec-bot/.github/workflows/release.yml@6663c22576563ed88d4f8492dd2e97aea1dc2eaf # v0.4.0
     with:
       dry-run: true
     secrets:
@@ -136,7 +136,7 @@ jobs:
   release:
     needs: [get-version]
     if: github.event_name == 'push' && needs.get-version.outputs.released == 'true'
-    uses: lukislp/lktec-bot/.github/workflows/release.yml@f1dbc56e0810b5f78691019889fc76cf5423d7fa # v0.3.0
+    uses: lukislp/lktec-bot/.github/workflows/release.yml@6663c22576563ed88d4f8492dd2e97aea1dc2eaf # v0.4.0
     secrets:
       app-id: ${{ secrets.LKTEC_BOT_APP_ID }}
       private-key: ${{ secrets.LKTEC_BOT_PRIVATE_KEY }}
