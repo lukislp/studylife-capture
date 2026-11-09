@@ -204,7 +204,7 @@ jobs:
       #   cosign verify-blob --bundle <asset>.sigstore.json \
       #     --certificate-identity-regexp '^https://github.com/lukislp/studylife-capture/' \
       #     --certificate-oidc-issuer https://token.actions.githubusercontent.com <asset>
-      - uses: sigstore/cosign-installer@6f9f17788090df1f26f669e9d70d6ae9567deba6 # v4.1.2
+      - uses: sigstore/cosign-installer@756fe2d284c7292c4e9b62c8a28f1e5629c59532 # v4.1.3
       - name: Sign the release assets and attach the signature bundles
         run: |
           for f in release/*.zip; do
@@ -274,7 +274,7 @@ jobs:
             token.actions.githubusercontent.com:443
             tuf-repo-cdn.sigstore.dev:443
             uploads.github.com:443
-      - uses: sigstore/cosign-installer@6f9f17788090df1f26f669e9d70d6ae9567deba6 # v4.1.2
+      - uses: sigstore/cosign-installer@756fe2d284c7292c4e9b62c8a28f1e5629c59532 # v4.1.3
       - name: Sign the assets of releases that have no signature bundle yet
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
