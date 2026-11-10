@@ -11,6 +11,9 @@ modules:
     workflow-files: auto
     # How GitHub merges once the checks are green.
     method: squash
+    # Merge a pull request GitHub refuses to arm because it is already mergeable (merge verb,
+    # lktec-bot v0.9.0): only that case, bound to the approved head, never an admin merge.
+    merge-ready: true
     # Dependency names (exact, case-insensitive) that are never approved or armed.
     exclude: []
 
