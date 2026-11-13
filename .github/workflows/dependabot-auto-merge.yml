@@ -20,7 +20,7 @@ permissions:
 
 jobs:
   automerge:
-    uses: lukislp/lktec-bot/.github/workflows/automerge.yml@dd3131cb2f1ac193e3b50a4e8cb1c1547ec69b9b # v0.10.0
+    uses: lukislp/lktec-bot/.github/workflows/automerge.yml@e5330888097685d7c173bd09caa1eaae713fe1ba # v0.10.2
     secrets:
       app-id: ${{ secrets.LKTEC_BOT_APP_ID }}
       private-key: ${{ secrets.LKTEC_BOT_PRIVATE_KEY }}
