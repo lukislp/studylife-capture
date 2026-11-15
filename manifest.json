@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "StudyLife Capture",
+  "name": "StudyAtrium Capture",
   "version": "1.5.12",
-  "description": "Save selected text or articles into your self-hosted StudyLife instance as notes.",
+  "description": "Save selected text or articles into your self-hosted StudyAtrium instance as notes.",
   "permissions": [
     "contextMenus",
     "storage",
