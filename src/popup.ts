@@ -40,7 +40,7 @@ async function init(): Promise<void> {
 connectButton.addEventListener("click", async () => {
   const serverUrl = normalizeServerUrl(serverUrlInput.value);
   if (!serverUrl) {
-    setConnectStatus("Enter your StudyLife server URL first.", "error");
+    setConnectStatus("Enter your StudyAtrium server URL first.", "error");
     return;
   }
   let parsedUrl: URL;
@@ -73,7 +73,7 @@ connectButton.addEventListener("click", async () => {
   const originPattern = parsedUrl.origin + "/*";
   if (!(await chrome.permissions.contains({ origins: [originPattern] }))) {
     await setPendingConnect(serverUrl);
-    setConnectStatus("Grant the permission prompt - StudyLife's login window then opens automatically.", "success");
+    setConnectStatus("Grant the permission prompt - StudyAtrium's login window then opens automatically.", "success");
     const granted = await requestHostPermission(originPattern);
     if (!granted) {
       await clearPendingConnect();
@@ -84,7 +84,7 @@ connectButton.addEventListener("click", async () => {
     return;
   }
 
-  setConnectStatus("Opening StudyLife's login page... if a window opens, this popup will close - " +
+  setConnectStatus("Opening StudyAtrium's login page... if a window opens, this popup will close - " +
     "look for a confirmation notification once you're done.", "success");
 
   chrome.runtime

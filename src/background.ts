@@ -18,12 +18,12 @@ const ARTICLE_EXTRACTED_MESSAGE = "studylife-capture:article-extracted";
 chrome.runtime.onInstalled.addListener(() => {
   chrome.contextMenus.create({
     id: SELECTION_MENU_ID,
-    title: "Save selection to StudyLife",
+    title: "Save selection to StudyAtrium",
     contexts: ["selection"],
   });
   chrome.contextMenus.create({
     id: ARTICLE_MENU_ID,
-    title: "Save full article to StudyLife",
+    title: "Save full article to StudyAtrium",
     contexts: ["page"],
   });
 });
@@ -47,7 +47,7 @@ async function extractAndCaptureArticle(tab: chrome.tabs.Tab | undefined): Promi
     await chrome.scripting.executeScript({ target: { tabId: tab.id }, files: ["article-extractor.js"] });
   } catch (error) {
     notify(
-      "StudyLife Capture failed",
+      "StudyAtrium Capture failed",
       `Could not read this page: ${error instanceof Error ? error.message : String(error)}`,
     );
   }
@@ -90,7 +90,7 @@ chrome.runtime.onMessage.addListener((message: unknown, sender, sendResponse) =>
   }
   const { title, content, error } = message as { title?: string; content?: string; error?: string };
   if (error) {
-    notify("StudyLife Capture failed", error);
+    notify("StudyAtrium Capture failed", error);
     return undefined;
   }
   void capture(title ?? sender.tab?.title ?? "Untitled", content ?? "", sender.tab?.url ?? "");
@@ -179,9 +179,9 @@ async function handleConnectRequest(rawServerUrl: string): Promise<ConnectResult
 // result unchanged, so every return path above can just be `return finishConnect(result)`.
 function finishConnect(result: ConnectResult): ConnectResult {
   if (result.ok) {
-    notify("Connected to StudyLife", result.serverUrl);
+    notify("Connected to StudyAtrium", result.serverUrl);
   } else {
-    notify("StudyLife Connect failed", describeConnectResult(result));
+    notify("StudyAtrium Connect failed", describeConnectResult(result));
   }
   return result;
 }
@@ -189,32 +189,32 @@ function finishConnect(result: ConnectResult): ConnectResult {
 async function capture(title: string, content: string, sourceUrl: string): Promise<void> {
   const settings = await loadSettings();
   if (!settings) {
-    notify("StudyLife Capture", "Set your server URL and API key in the extension popup first.");
+    notify("StudyAtrium Capture", "Set your server URL and API key in the extension popup first.");
     return;
   }
 
   const result = await saveCapture(settings, { title, content, sourceUrl });
 
   if (result.ok) {
-    notify("Saved to StudyLife", title);
+    notify("Saved to StudyAtrium", title);
     return;
   }
 
   switch (result.kind) {
     case "offline":
-      notify("StudyLife Capture failed", "You're offline - try again once you're back online.");
+      notify("StudyAtrium Capture failed", "You're offline - try again once you're back online.");
       break;
     case "unauthorized":
       notify(
-        "StudyLife Capture failed",
-        "Your API key is invalid or was revoked. Open the extension popup and reconnect with StudyLife to get a new one.",
+        "StudyAtrium Capture failed",
+        "Your API key is invalid or was revoked. Open the extension popup and reconnect with StudyAtrium to get a new one.",
       );
       break;
     case "http":
-      notify("StudyLife Capture failed", `HTTP ${result.status}: ${result.message}`.slice(0, 200));
+      notify("StudyAtrium Capture failed", `HTTP ${result.status}: ${result.message}`.slice(0, 200));
       break;
     case "network":
-      notify("StudyLife Capture failed", `Could not reach the StudyLife server: ${result.message}`.slice(0, 200));
+      notify("StudyAtrium Capture failed", `Could not reach the StudyAtrium server: ${result.message}`.slice(0, 200));
       break;
   }
 }

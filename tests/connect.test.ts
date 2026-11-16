@@ -78,7 +78,7 @@ describe("describeConnectResult", () => {
   });
 
   it("returns the exact connected message", () => {
-    expect(describeConnectResult({ ok: true, serverUrl: "https://x" })).toBe("Connected to StudyLife.");
+    expect(describeConnectResult({ ok: true, serverUrl: "https://x" })).toBe("Connected to StudyAtrium.");
   });
 
   it("returns the exact cancelled message", () => {

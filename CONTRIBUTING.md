@@ -1,6 +1,6 @@
-# Contributing to StudyLife Capture
+# Contributing to StudyAtrium Capture
 
-Thanks for taking the time. StudyLife Capture is a single-maintainer project, so the process is
+Thanks for taking the time. StudyAtrium Capture is a single-maintainer project, so the process is
 deliberately small - but it is the same for every change, including the maintainer's own.
 
 ## How changes get in

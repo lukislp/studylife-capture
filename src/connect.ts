@@ -71,7 +71,7 @@ export function parseAuthRedirect(
 // inconsistent wording for the same outcome.
 export function describeConnectResult(result: ConnectResult): string {
   if (result.ok) {
-    return "Connected to StudyLife.";
+    return "Connected to StudyAtrium.";
   }
   switch (result.kind) {
     case "invalid-url":
@@ -81,13 +81,13 @@ export function describeConnectResult(result: ConnectResult): string {
     case "cancelled":
       return "Connection cancelled.";
     case "auth-window-failed":
-      return `Couldn't open StudyLife's login page: ${result.message}`;
+      return `Couldn't open StudyAtrium's login page: ${result.message}`;
     case "invalid-redirect":
-      return "StudyLife's response was missing the expected data - try connecting again.";
+      return "StudyAtrium's response was missing the expected data - try connecting again.";
     case "state-mismatch":
       return "Couldn't verify the connection response - try connecting again.";
     case "server-outdated":
-      return "This StudyLife server doesn't support browser connect yet - update the server, then try again.";
+      return "This StudyAtrium server doesn't support browser connect yet - update the server, then try again.";
     case "offline":
       return "You're offline - connect again once you're back online.";
     case "exchange-failed":

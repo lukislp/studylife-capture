@@ -1,16 +1,16 @@
-# Privacy Policy for StudyLife Capture
+# Privacy Policy for StudyAtrium Capture
 
 _Last updated: 2026-08-27_
 
-StudyLife Capture is a browser extension that saves text you select or a full article you're
-reading into your own, self-hosted [StudyLife](https://github.com/lukislp/studylife) instance.
-It is a companion tool for a self-hosted, open-source project — there is no StudyLife-operated
+StudyAtrium Capture is a browser extension that saves text you select or a full article you're
+reading into your own, self-hosted [StudyAtrium](https://github.com/lukislp/studylife) instance.
+It is a companion tool for a self-hosted, open-source project — there is no StudyAtrium-operated
 backend, account system, or analytics service behind it.
 
 ## What data the extension handles
 
-- **Server URL and API key** — the address of your StudyLife instance and a `CaptureApiKey`,
-  obtained via the in-popup **Connect with StudyLife** button (a passkey login/consent page on
+- **Server URL and API key** — the address of your StudyAtrium instance and a `CaptureApiKey`,
+  obtained via the in-popup **Connect with StudyAtrium** button (a passkey login/consent page on
   your own server, opened through Chrome's `identity` API; self-hosted setups the browser flow
   can't reach can place a manually minted key in extension storage instead, see the README).
   Stored locally in your browser profile (`chrome.storage.local`), never transmitted anywhere
@@ -26,10 +26,10 @@ does not run on pages you don't explicitly capture from, and does not collect an
 ## Where data goes
 
 Captured content is sent, over HTTPS/HTTP as configured, to exactly one destination: the
-StudyLife server URL you entered in the extension's settings popup — an instance you (or whoever
-you trust) control and host yourself. From there, StudyLife's own backend may forward the note to
+StudyAtrium server URL you entered in the extension's settings popup — an instance you (or whoever
+you trust) control and host yourself. From there, StudyAtrium's own backend may forward the note to
 [studylife-ai](https://github.com/lukislp/studylife-ai), also self-hosted, for optional AI
-enrichment (course matching, tags, a summary) — that is a property of the StudyLife instance you
+enrichment (course matching, tags, a summary) — that is a property of the StudyAtrium instance you
 pointed the extension at, not of this extension.
 
 **The extension itself never sends data to the developer, to Google, or to any third party.**
@@ -43,7 +43,7 @@ network call the extension makes is visible in [`src/api.ts`](src/api.ts) and
 
 Locally stored settings (server URL, API key) can be cleared at any time by removing the
 extension, or by clearing its data via `chrome://extensions`. Captured content lives entirely on
-the StudyLife instance you sent it to — deleting it there (StudyLife's own Notes page) is the only
+the StudyAtrium instance you sent it to — deleting it there (StudyAtrium's own Notes page) is the only
 place it's retained, since this extension itself does not keep a copy after a successful capture.
 
 ## Permissions

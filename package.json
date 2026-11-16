@@ -2,7 +2,7 @@
   "name": "studylife-capture",
   "version": "1.5.12",
   "private": true,
-  "description": "Chrome extension: capture selected text/articles into StudyLife as notes",
+  "description": "Chrome extension: capture selected text/articles into StudyAtrium as notes",
   "license": "AGPL-3.0",
   "scripts": {
     "build": "node build.mjs",
