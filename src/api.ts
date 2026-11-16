@@ -114,7 +114,11 @@ export type ExchangeResult =
 // POST /api/auth/capture-assertion-exchange (StudyLife's AuthController). Anonymous POST:
 // the assertion itself is the credential, there's no X-Api-Key to send yet since that's exactly
 // what this call is meant to produce.
-export async function exchangeCaptureAssertion(serverUrl: string, assertion: string): Promise<ExchangeResult> {
+export async function exchangeCaptureAssertion(
+  serverUrl: string,
+  assertion: string,
+  codeVerifier: string,
+): Promise<ExchangeResult> {
   if (typeof navigator !== "undefined" && navigator.onLine === false) {
     return { ok: false, kind: "offline" };
   }
@@ -123,7 +127,7 @@ export async function exchangeCaptureAssertion(serverUrl: string, assertion: str
     const response = await fetchWithTimeout(url, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ assertion }),
+      body: JSON.stringify({ assertion, codeVerifier }),
     });
     if (response.status === 404) {
       return { ok: false, kind: "not-found" };
