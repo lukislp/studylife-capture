@@ -1,7 +1,9 @@
 ﻿import { exchangeCaptureAssertion, saveCapture } from "./api";
 import {
+  buildConsentUrl,
   describeConnectResult,
   isConnectMessage,
+  newPkcePair,
   parseAuthRedirect,
   takePendingConnect,
   type ConnectResult,
@@ -127,13 +129,13 @@ async function handleConnectRequest(rawServerUrl: string): Promise<ConnectResult
   // checked back below - guards against a forged or stale redirect to the extension's
   // chromiumapp.org callback URL being accepted as a real server response.
   const state = crypto.randomUUID();
-  const authUrl = new URL("/connect/capture", serverUrl);
-  authUrl.searchParams.set("redirect_uri", chrome.identity.getRedirectURL());
-  authUrl.searchParams.set("state", state);
+  // PKCE verifier lives in memory with `state` for this one attempt (see connect.ts).
+  const pkce = await newPkcePair();
+  const authUrl = buildConsentUrl(serverUrl, chrome.identity.getRedirectURL(), state, pkce.challenge);
 
   let responseUrl: string | undefined;
   try {
-    responseUrl = await chrome.identity.launchWebAuthFlow({ url: authUrl.toString(), interactive: true });
+    responseUrl = await chrome.identity.launchWebAuthFlow({ url: authUrl, interactive: true });
   } catch (error) {
     // Chrome reports both "user closed the auth window" and "user clicked deny on the consent
     // page" as a rejected promise with a generic message - no reliable way to tell them apart, so
@@ -153,7 +155,7 @@ async function handleConnectRequest(rawServerUrl: string): Promise<ConnectResult
     return finishConnect({ ok: false, kind: redirectResult.kind });
   }
 
-  const exchange = await exchangeCaptureAssertion(serverUrl, redirectResult.assertion);
+  const exchange = await exchangeCaptureAssertion(serverUrl, redirectResult.assertion, pkce.verifier);
   if (!exchange.ok) {
     switch (exchange.kind) {
       case "offline":

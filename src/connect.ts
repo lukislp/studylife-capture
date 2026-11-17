@@ -35,6 +35,37 @@ export type ConnectResult =
   | { ok: false; kind: "offline" }
   | { ok: false; kind: "exchange-failed"; message: string };
 
+// PKCE (RFC 7636, S256). The verifier is generated per connect attempt, held only in memory next to
+// the per-attempt `state` (handleConnectRequest's local scope - never in a URL, never in
+// chrome.storage), sent once in the assertion exchange body, then dropped with the function scope.
+function toBase64Url(bytes: Uint8Array): string {
+  let binary = "";
+  for (const byte of bytes) binary += String.fromCharCode(byte);
+  return btoa(binary).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+}
+
+export interface PkcePair {
+  verifier: string;
+  challenge: string;
+}
+
+export async function newPkcePair(): Promise<PkcePair> {
+  const bytes = new Uint8Array(32);
+  crypto.getRandomValues(bytes);
+  const verifier = toBase64Url(bytes);
+  const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(verifier));
+  return { verifier, challenge: toBase64Url(new Uint8Array(digest)) };
+}
+
+export function buildConsentUrl(serverUrl: string, redirectUri: string, state: string, challenge: string): string {
+  const url = new URL("/connect/capture", serverUrl);
+  url.searchParams.set("redirect_uri", redirectUri);
+  url.searchParams.set("state", state);
+  url.searchParams.set("code_challenge", challenge);
+  url.searchParams.set("code_challenge_method", "S256");
+  return url.toString();
+}
+
 // Pure and exported specifically so it's unit-testable without any chrome.* mocking - parses the
 // redirect chrome.identity.launchWebAuthFlow() hands back
 // (<redirect_uri>?assertion=..&state=..) and checks the state round-trips, guarding against a

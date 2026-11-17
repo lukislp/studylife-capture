@@ -129,7 +129,10 @@ with a separate shared secret between StudyAtrium and studylife-ai the extension
 - **Browser connect**: clicking **Connect with StudyAtrium** opens your own server's login/consent
   page via `chrome.identity.launchWebAuthFlow`, using a per-attempt random `state` value to make
   sure the assertion that comes back is the one this specific attempt actually requested — not a
-  forged or replayed redirect. The resulting `CaptureApiKey` never passes through the developer or
+  forged or replayed redirect. The flow also uses PKCE (S256): a per-attempt code verifier is kept
+  only in memory in the extension's service worker, its SHA-256 challenge goes to the consent page,
+  and the verifier is sent once in the assertion exchange, so an assertion seen in the redirect
+  can't be redeemed by anyone else. The resulting `CaptureApiKey` never passes through the developer or
   any third party; it's exchanged directly between your browser and your own server.
 - **API key storage**: the server URL and API key live in `chrome.storage.local`, local to your
   browser profile, however you obtained the key. The key itself is a long-lived, revocable secret

@@ -1,6 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { exchangeCaptureAssertion } from "../src/api";
 import {
+  buildConsentUrl,
   clearPendingConnect,
+  newPkcePair,
   describeConnectResult,
   parseAuthRedirect,
   setPendingConnect,
@@ -138,5 +141,53 @@ describe("pending connect marker", () => {
     await setPendingConnect(serverUrl);
     await clearPendingConnect();
     await expect(takePendingConnect([origin])).resolves.toBeNull();
+  });
+});
+
+describe("PKCE", () => {
+  const b64url = (bytes: Uint8Array) =>
+    btoa(String.fromCharCode(...bytes)).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+
+  it("creates a verifier of unreserved characters whose challenge is base64url SHA-256", async () => {
+    const { verifier, challenge } = await newPkcePair();
+    expect(verifier).toMatch(/^[A-Za-z0-9\-._~]{43,128}$/);
+    const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(verifier));
+    expect(challenge).toBe(b64url(new Uint8Array(digest)));
+  });
+
+  it("matches the RFC 7636 appendix B test vector shape (no padding)", async () => {
+    const digest = await crypto.subtle.digest(
+      "SHA-256",
+      new TextEncoder().encode("dBjftJeZ4CVP-mB92K27uhbUJU1p1r_wW1gFWFOEjXk"),
+    );
+    expect(b64url(new Uint8Array(digest))).toBe("E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM");
+  });
+
+  it("generates a fresh verifier per attempt", async () => {
+    const a = await newPkcePair();
+    const b = await newPkcePair();
+    expect(a.verifier).not.toBe(b.verifier);
+  });
+
+  it("puts code_challenge and code_challenge_method=S256 on the consent URL", () => {
+    const url = new URL(buildConsentUrl("https://srv.example", "https://ext.chromiumapp.org/", "st", "chal"));
+    expect(url.pathname).toBe("/connect/capture");
+    expect(url.searchParams.get("state")).toBe("st");
+    expect(url.searchParams.get("code_challenge")).toBe("chal");
+    expect(url.searchParams.get("code_challenge_method")).toBe("S256");
+    expect(url.searchParams.get("redirect_uri")).toBe("https://ext.chromiumapp.org/");
+  });
+
+  it("sends codeVerifier in the exchange body and never persists the verifier", async () => {
+    const fetchMock = vi.fn(async () => new Response(JSON.stringify({ captureApiKey: "k", userId: 1 }), { status: 200 }));
+    vi.stubGlobal("fetch", fetchMock);
+    const { verifier } = await newPkcePair();
+    const result = await exchangeCaptureAssertion("https://srv.example", "asrt", verifier);
+    expect(result.ok).toBe(true);
+    const [url, init] = fetchMock.mock.calls[0] as unknown as [string, RequestInit];
+    expect(url).toBe("https://srv.example/api/auth/capture-assertion-exchange");
+    expect(JSON.parse(init.body as string)).toEqual({ assertion: "asrt", codeVerifier: verifier });
+    expect(JSON.stringify(storage)).not.toContain(verifier);
+    vi.unstubAllGlobals();
   });
 });
