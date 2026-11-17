@@ -73,7 +73,9 @@ jobs:
       # scripts/contract-check.mjs), so a server-side field rename fails here instead of silently
       # 401/400-ing once the Web Store review finally lets a drifted build reach users.
       - run: npm run contract-check
-      - run: npm audit --audit-level=high
+      # npm audit at high/critical, minus the one advisory with no upstream fix; remove the
+      # allowlist once picomatch publishes a patched release (micromatch/picomatch#194).
+      - run: node scripts/audit-allowlist.mjs
 
   build:
     needs: [lint]

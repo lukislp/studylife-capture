@@ -29,7 +29,7 @@ deliberately small - but it is the same for every change, including the maintain
 - **API contract.** `npm run contract-check` diffs the payload types this extension mirrors by hand
   against the main `studylife` repo's committed OpenAPI spec. If the server contract moved, update
   the mirror in the same PR - the check is part of `lint` and blocks the merge otherwise.
-- **Dependencies.** `npm audit --audit-level=high` runs in `lint` and must stay clean.
+- **Dependencies.** `node scripts/audit-allowlist.mjs` (high/critical `npm audit`) runs in `lint` and must stay clean. It allowlists only GHSA-fc5q-39xc-vjpf (picomatch, no upstream fix yet); remove the allowlist once picomatch publishes a patched release (micromatch/picomatch#194).
 - **Permissions and privacy.** Adding a `manifest.json` permission, or capturing anything new from
   a page, is a review topic of its own: say in the PR why it is needed and update `PRIVACY.md` if
   what leaves the browser changes. The browser store listing is justified against those notes.
