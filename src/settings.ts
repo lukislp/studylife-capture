@@ -1,5 +1,5 @@
 // Self-hosted, so unlike a typical extension there's no single fixed API host -
-// every user points this at their own StudyLife instance.
+// every user points this at their own StudyAtrium instance.
 export interface CaptureSettings {
   serverUrl: string;
   apiKey: string;

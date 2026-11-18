@@ -1,4 +1,4 @@
-// Guards against StudyLife's server-side NoteDto drifting out from under this extension's
+// Guards against StudyAtrium's server-side NoteDto drifting out from under this extension's
 // hand-mirrored NoteDtoPayload (src/api.ts) without anyone noticing until a Web Store review
 // finally lets the drifted build reach users - by then a fix is days away, not minutes. Diffs
 // the payload fields this extension actually sends against the main repo's committed OpenAPI

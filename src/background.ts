@@ -99,7 +99,7 @@ chrome.runtime.onMessage.addListener((message: unknown, sender, sendResponse) =>
   return undefined;
 });
 
-// Runs the whole browser-consent connect flow triggered by the "Connect with StudyLife" button in
+// Runs the whole browser-consent connect flow triggered by the "Connect with StudyAtrium" button in
 // popup.ts: requests the optional host permission for the user's server origin, opens the
 // passkey login/consent page via chrome.identity, exchanges the resulting assertion for a
 // CaptureApiKey, and stores it in extension storage (settings.ts). See
