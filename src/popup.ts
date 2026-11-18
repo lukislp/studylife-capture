@@ -15,7 +15,7 @@ async function init(): Promise<void> {
     // the permission prompt doesn't lose it) - only an actual key means "connected". When
     // connected, the button stays available on purpose but says what it actually does now:
     // re-running the consent flow ROTATES the capture key server-side - the recovery path after
-    // an emergency disconnect on the StudyLife setup page, and harmless otherwise (the old key
+    // an emergency disconnect on the StudyAtrium setup page, and harmless otherwise (the old key
     // is simply replaced with the fresh one).
     if (existing.apiKey) {
       connectionHint.textContent = `Connected to ${existing.serverUrl}`;
@@ -105,7 +105,7 @@ connectButton.addEventListener("click", async () => {
     });
 });
 
-// The manual paste-an-API-key fallback is gone: since the StudyLife setup page dropped its
+// The manual paste-an-API-key fallback is gone: since the StudyAtrium setup page dropped its
 // capture card, no UI exists that could even produce a key to paste - the browser-consent
 // connect above is THE provisioning path. Self-hosted instances the auth window can't reach
 // (self-signed certificate on a LAN) can still mint a key against the API directly and place

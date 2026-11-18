@@ -1,5 +1,5 @@
 // Browser-consent connect flow: shared between popup.ts (where the user clicks "Connect with
-// StudyLife", i.e. where the trusted user gesture originates) and background.ts (which actually
+// StudyAtrium", i.e. where the trusted user gesture originates) and background.ts (which actually
 // runs the flow). It has to live in the service worker, not the popup, because
 // chrome.identity.launchWebAuthFlow()'s interactive auth window steals focus and closes the
 // extension popup mid-await - the same focus-loss behavior the plain chrome.permissions.request()
