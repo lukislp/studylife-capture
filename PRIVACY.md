@@ -1,9 +1,9 @@
 # Privacy Policy for StudyAtrium Capture
 
-_Last updated: 2026-08-27_
+_Last updated: 2026-11-18_
 
 StudyAtrium Capture is a browser extension that saves text you select or a full article you're
-reading into your own, self-hosted [StudyAtrium](https://github.com/lukislp/studylife) instance.
+reading into your [StudyAtrium](https://github.com/lukislp/studylife) instance.
 It is a companion tool for a self-hosted, open-source project — there is no StudyAtrium-operated
 backend, account system, or analytics service behind it.
 
@@ -27,10 +27,13 @@ does not run on pages you don't explicitly capture from, and does not collect an
 
 Captured content is sent, over HTTPS/HTTP as configured, to exactly one destination: the
 StudyAtrium server URL you entered in the extension's settings popup — an instance you (or whoever
-you trust) control and host yourself. From there, StudyAtrium's own backend may forward the note to
-[studylife-ai](https://github.com/lukislp/studylife-ai), also self-hosted, for optional AI
-enrichment (course matching, tags, a summary) — that is a property of the StudyAtrium instance you
-pointed the extension at, not of this extension.
+you trust) operate. From there, StudyAtrium's own backend may forward the note to
+[studylife-ai](https://github.com/lukislp/studylife-ai) for optional AI enrichment (course matching,
+tags, a summary). The AI service is run by whoever operates that StudyAtrium instance, and it may
+send the note text to an external language-model provider (for example OpenAI). Whether it does,
+and which provider it uses, is decided by the instance operator and is a property of the
+StudyAtrium instance you pointed the extension at, not of this extension. Ask your operator if you
+need to know.
 
 **The extension itself never sends data to the developer, to Google, or to any third party.**
 There is no analytics SDK, no crash reporter, no telemetry, and no remote server operated by this
