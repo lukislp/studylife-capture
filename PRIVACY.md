@@ -1,6 +1,8 @@
 # Privacy Policy for StudyAtrium Capture
 
-_Last updated: 2026-11-18_
+_Last updated: 2026-11-19_
+
+**Controller:** the operator of your instance. **Publisher:** see the imprint at <https://lktec.org/impressum>.
 
 StudyAtrium Capture is a browser extension that saves text you select or a full article you're
 reading into your [StudyAtrium](https://github.com/lukislp/studylife) instance.
@@ -35,6 +37,13 @@ and which provider it uses, is decided by the instance operator and is a propert
 StudyAtrium instance you pointed the extension at, not of this extension. Ask your operator if you
 need to know.
 
+What the AI enrichment does with a capture (the selection or full article, plus the title and
+source URL as stored on the note): the instance's background task sends the note content to the
+instance's studylife-ai service for course matching, tags, a one-sentence summary and related-notes
+search (embeddings in the instance's own vector store). If the operator configured an external
+language-model provider, the note content is therefore also processed by that provider. Nothing
+is enriched unless you explicitly captured it.
+
 **The extension itself never sends data to the developer, to Google, or to any third party.**
 There is no analytics SDK, no crash reporter, no telemetry, and no remote server operated by this
 project. The full source is available at
@@ -48,6 +57,10 @@ Locally stored settings (server URL, API key) can be cleared at any time by remo
 extension, or by clearing its data via `chrome://extensions`. Captured content lives entirely on
 the StudyAtrium instance you sent it to — deleting it there (StudyAtrium's own Notes page) is the only
 place it's retained, since this extension itself does not keep a copy after a successful capture.
+
+The extension has no separate *Disconnect* button. Removing it only deletes the local copy of the
+key; to invalidate the key itself, disconnect it on your StudyAtrium instance (Setup -> External
+connections) or reconnect from the popup, which replaces it.
 
 ## Permissions
 
@@ -63,5 +76,6 @@ commit history like any other change.
 
 ## Contact
 
-Questions or concerns: open an issue at
+For questions about your data (access, deletion, AI processing), contact the operator of your
+instance. For questions about the extension itself, open an issue at
 [github.com/lukislp/studylife-capture/issues](https://github.com/lukislp/studylife-capture/issues).

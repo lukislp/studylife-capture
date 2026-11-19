@@ -143,8 +143,12 @@ with a separate shared secret between StudyAtrium and studylife-ai the extension
   only the current tab, only in response to the context-menu click that triggered it — no
   standing host permission needed for article capture at all), `identity` (opens the browser
   connect flow's login window and provides its `chromiumapp.org` redirect URL — nothing else).
-- **No telemetry, no third-party requests**: the only network calls are to the StudyAtrium server
-  origin you explicitly granted access to.
+- **No telemetry, no requests from the extension to third parties**: the only network calls the
+  extension makes are to the StudyAtrium server origin you explicitly granted access to. What the
+  server then does with a capture (AI enrichment, possibly an external language-model provider) is
+  decided by the instance operator, see [PRIVACY.md](PRIVACY.md).
+- **No disconnect button**: removing the extension deletes the local key only. To invalidate the key,
+  disconnect it on StudyAtrium's Setup -> External connections card.
 
 ## Development
 
@@ -197,8 +201,11 @@ enrichment logic lives, not here.
 
 ## Privacy
 
-See [PRIVACY.md](PRIVACY.md) — in short, nothing leaves your device except to the StudyAtrium
-server you explicitly configure. No analytics, no telemetry, no third party.
+See [PRIVACY.md](PRIVACY.md) — in short, the extension sends captures only to the StudyAtrium
+server you explicitly configure, and has no analytics or telemetry. That server may forward the note
+to its AI service and, if the operator set one up, an external language-model provider.
+
+**Controller:** the operator of your instance. **Publisher:** see the imprint at <https://lktec.org/impressum>.
 
 ## License
 
