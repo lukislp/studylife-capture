@@ -19,7 +19,7 @@ permissions:
 
 jobs:
   review:
-    uses: lukislp/ci-workflows/.github/workflows/dependency-review.yml@a463e9901195058d0948a7f6f3a7cde0f202ea9e # v1.11.1
+    uses: lukislp/ci-workflows/.github/workflows/dependency-review.yml@8b58163da2f126016905ac070b4985c2ee921529 # v1.11.3
     # pull-requests: write is what the summary comment needs; the called workflow keeps
     # contents at read.
     permissions:
